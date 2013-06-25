@@ -1,0 +1,304 @@
+<source api="1" autosplit="100">
+  <id>grl-jamendo-xml</id>
+  <name>Jamendo XML</name>
+  <description>A source for browsing and searching Jamendo music</description>
+
+  <strings>
+    <string id="artists">Artists</string>
+    <string id="albums">Albums</string>
+    <string id="feeds">Feeds</string>
+    <string id="week-albums">Albums of the Week</string>
+    <string id="week-tracks">Tracks of the Week</string>
+    <string id="new-releases">New Releases</string>
+    <string id="top-artists">Top Artists</string>
+    <string id="top-albums">Top Albums</string>
+    <string id="top-tracks">Top Tracks</string>
+  </strings>
+
+  <strings lang="es">
+    <string id="artists">Artistas</string>
+    <string id="albums">Albumes</string>
+    <string id="feeds">Proveedores</string>
+    <string id="week-albums">Albumes de la Semana</string>
+    <string id="week-tracks">Pistas de la Semana</string>
+    <string id="new-releases">Nuevos Lanzamientos</string>
+    <string id="top-artists">Mejores Artistas</string>
+    <string id="top-albums">Mejores Albumes</string>
+    <string id="top-tracks">Mejores Pistas</string>
+  </strings>
+
+  <!-- Supported operations -->
+  <operation>
+    <!-- Search -->
+    <search skip="%param:page_offset%">
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?n=%param:page_size%&amp;pn=%param:page_number%&amp;searchquery=%param:search_text%</url>
+      </result>
+    </search>
+
+    <!-- Browse: root level -->
+    <browse skip="%param:skip%" count="%param:count%">
+      <require>
+        <key name="id">^$</key>
+      </require>
+      <result id="root-level">
+        <![CDATA[
+                 <fixed>
+                   <media>
+                     <id>root-artists</id>
+                     <title>%str:artists%</title>
+                   </media>
+                   <media>
+                     <id>root-albums</id>
+                     <title>%str:albums%</title>
+                   </media>
+                   <media>
+                     <id>root-feeds</id>
+                     <title>%str:feeds%</title>
+                     <childcount>6</childcount>
+                   </media>
+                 </fixed>
+        ]]>
+      </result>
+    </browse>
+
+    <!-- Browse: feed list -->
+    <browse skip="%param:skip%" count="%param:count%">
+      <require>
+        <key name="id">^root-feeds$</key>
+      </require>
+      <result id="feeds">
+        <![CDATA[
+                 <fixed>
+                   <media>
+                     <id>feed-week-albums</id>
+                     <title>%str:week-albums%</title>
+                   </media>
+                   <media>
+                     <id>feed-week-tracks</id>
+                     <title>%str:week-tracks%</title>
+                   </media>
+                   <media>
+                     <id>feed-new-releases</id>
+                     <title>%str:new-releases%</title>
+                   </media>
+                   <media>
+                     <id>feed-top-artists</id>
+                     <title>%str:top-artists%</title>
+                   </media>
+                   <media>
+                     <id>feed-top-albums</id>
+                     <title>%str:top-albums%</title>
+                   </media>
+                   <media>
+                     <id>feed-top-tracks</id>
+                     <title>%str:top-tracks%</title>
+                   </media>
+                 </fixed>
+        ]]>
+      </result>
+    </browse>
+
+    <!-- Browse: all artists -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^root-artists$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url/artist/xml/?n=%param:page_size%&amp;pn=%param:page_number%</url>
+      </result>
+    </browse>
+
+    <!-- Browse: all albums -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^root-albums</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration/album/xml/album_artist/?n=%param:page_size%&amp;pn=%param:page_number%</url>
+      </result>
+    </browse>
+
+    <!-- Browse: all albums from artist -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="artist">.+</key>
+        <key name="album">^$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration/album/xml/album_artist/?n=%param:page_size%&amp;pn=%param:page_number%&amp;artist_id=%key:id%</url>
+      </result>
+    </browse>
+
+    <!-- Browse: all tracks from album -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="artist">.+</key>
+        <key name="album">.+</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?n=%param:page_size%&amp;pn=%param:page_number%&amp;album_id=%key:id%</url>
+      </result>
+    </browse>
+
+    <!-- Browse: albums of the week -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-week-albums$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration/album/xml/album_artist/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=ratingweek_desc</url>
+      </result>
+    </browse>
+
+    <!-- Browse: tracks of the week -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-week-tracks$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=ratingweek_desc</url>
+      </result>
+    </browse>
+
+    <!-- Browse: new releases -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-new-releases$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=releasedate_desc</url>
+      </result>
+    </browse>
+
+    <!-- Browse: top artists -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-top-artists$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url/artist/xml/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=rating_desc</url>
+      </result>
+    </browse>
+
+    <!-- Browse: top albums -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-top-albums$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration/album/xml/album_artist/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=rating_desc</url>
+      </result>
+    </browse>
+
+    <!-- Browse: top tracks -->
+    <browse skip="%param:page_offset%">
+      <require>
+        <key name="id">^feed-top-tracks$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?n=%param:page_size%&amp;pn=%param:page_number%&amp;order=rating_desc</url>
+      </result>
+    </browse>
+
+    <!-- Resolve: top level categories -->
+    <resolve>
+      <require type="box">
+        <key name="id">^root-.+</key>
+      </require>
+      <result ref="root-level"/>
+    </resolve>
+
+    <!-- Resolve: feeds -->
+    <resolve>
+      <require type="box">
+        <key name="id">^feed-.+</key>
+      </require>
+      <result ref="feeds"/>
+    </resolve>
+
+    <!-- Resolve: track -->
+    <resolve>
+      <require type="audio"/>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration+track_name+track_stream+track_url+track_duration/track/xml/album_artist+track_album/?id=%key:id%</url>
+      </result>
+    </resolve>
+
+    <!-- Resolve: artist -->
+    <resolve>
+      <require type="box">
+        <key name="artist">.+</key>
+        <key name="album">^$</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url/artist/xml/?id=%key:id%</url>
+      </result>
+    </resolve>
+
+   <!-- Resolve: album -->
+    <resolve>
+      <require type="box">
+        <key name="artist">.+</key>
+        <key name="album">.+</key>
+      </require>
+      <result>
+        <url>http://api.jamendo.com/get2/id+artist_name+artist_genre+artist_image+artist_url+album_name+album_genre+album_image+album_url+album_duration/album/xml/album_artist/?id=%key:id%</url>
+      </result>
+    </resolve>
+  </operation>
+
+  <!-- Type of provided content -->
+  <provide>
+    <!-- Fixed content -->
+    <media type="box"
+           query="/fixed/media"
+           select="/fixed/media[id='%key:id%']">
+      <key name="id">id</key>
+      <key name="title">title</key>
+      <key name="childcount">childcount</key>
+    </media>
+
+    <!-- Tracks from XML results -->
+    <media type="audio"
+           query="/data/track"
+           select="/data/track">
+      <key name="id" force="true">id</key>
+      <key name="title">track_name</key>
+      <key name="artist" force="true">artist_mame</key>
+      <key name="album" force="true">album_name</key>
+      <key name="genre">album_genre</key>
+      <key name="duration">album_duration</key>
+      <key name="thumbnail">album_image</key>
+      <key name="site">track_url</key>
+      <key name="url">track_stream</key>
+    </media>
+
+    <!-- Artists from XML results -->
+    <media type="box"
+           query="/data/artist"
+           select="/data/artist">
+      <key name="id" force="true">id</key>
+      <key name="title">artist_name</key>
+      <key name="artist" force="true">artist_name</key>
+      <key name="genre">artist_genre</key>
+      <key name="thumbnail">artist_image</key>
+      <key name="site">artist_url</key>
+    </media>
+
+    <!-- Albums from XML results -->
+    <media type="box"
+           query="/data/album"
+           select="/data/album">
+      <key name="id" force="true">id</key>
+      <key name="title">album_name</key>
+      <key name="artist" force="true">artist_name</key>
+      <key name="album" force="true">album_name</key>
+      <key name="genre">album_genre</key>
+      <key name="thumbnail">album_image</key>
+      <key name="duration">album_duration</key>
+      <key name="site">album_url</key>
+    </media>
+  </provide>
+
+</source>

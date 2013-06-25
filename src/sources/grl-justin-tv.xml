@@ -1,0 +1,78 @@
+<source api="1" autosplit="100">
+  <id>grl-justin-tv</id>
+  <name>Justin.TV</name>
+  <description>Streaming live video broadcasts for everyone</description>
+
+  <operation>
+    <search>
+      <result>
+        <url>http://api.justin.tv/api/stream/search/%param:search_text%.xml?offset=%param:skip%&amp;limit=%param:count%</url>
+      </result>
+    </search>
+
+    <browse skip="%param:skip%" count="%param:count%">
+      <require>
+        <key name="id">^$</key>
+      </require>
+      <result format="json" cache="0">
+        <url>http://api.justin.tv/api/category/list.json</url>
+      </result>
+    </browse>
+
+    <browse>
+      <require>
+        <key name="id">.+</key>
+      </require>
+      <result>
+        <url>http://api.justin.tv/api/stream/list.xml?offset=%param:skip%&amp;limit=%param:count%&amp;category=%key:id%</url>
+      </result>
+    </browse>
+
+    <resolve>
+      <require type="video"/>
+      <result>
+        <url>http://api.justin.tv/api/stream/list.xml?offset=%param:skip%&amp;limit=%param:count%&amp;channel=%key:id%</url>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="video"
+           query="/streams/stream"
+           select="/streams/stream">
+      <key name="id">channel/login</key>
+      <key name="title">title</key>
+      <key name="width">video_width</key>
+      <key name="height">video_height</key>
+      <key name="thumbnail">channel/image_url_large</key>
+      <key name="url" slow="true">
+        <regexp>
+          <input>
+            <url>
+              <regexp>
+                <input>channel/login</input>
+                <output>http://api.justin.tv/api/channel/archives/\1.xml</output>
+              </regexp>
+            </url>
+          </input>
+          <output/>
+          <expression><![CDATA[<video_file_url>(.+)</video_file_url>]]></expression>
+        </regexp>
+      </key>
+    </media>
+
+    <media type="box" query="/categories/category">
+      <key name="id">keyword</key>
+      <key name="title">name</key>
+      <key name="thumbnail">icon</key>
+    </media>
+
+    <!-- This is for the case we want JSON data; remind JSON results are converted to XML -->
+    <media type="box" query="/json/*">
+      <key name="id">name()</key>
+      <key name="title">name</key>
+      <key name="thumbnail">icon</key>
+    </media>
+  </provide>
+
+</source>

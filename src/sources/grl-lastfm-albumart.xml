@@ -1,0 +1,24 @@
+<source api="1">
+  <id>grl-lastfm-albumart</id>
+  <name>Album art Provider from Last.FM</name>
+  <description>A plugin for getting album arts using Last.FM as backend</description>
+
+  <operation>
+    <resolve key="thumbnail" any="true">
+      <require type="audio">
+        <key name="artist"/>
+        <key name="album"/>
+      </require>
+      <result>
+        <url>http://ws.audioscrobbler.com/1.0/album/%key:artist%/%key:album%/info.xml</url>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="audio" select="/album/coverart">
+      <key name="thumbnail">large</key>
+    </media>
+  </provide>
+
+</source>

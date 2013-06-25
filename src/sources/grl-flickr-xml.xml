@@ -1,0 +1,35 @@
+<source api="1" autosplit="500">
+  <id>grl-flickr-xml</id>
+  <name>Flickr XML</name>
+  <description>Photos from flickr</description>
+
+  <config>
+    <key name="api-key">fa037bee8120a921b34f8209d715a2fa</key>
+    <key name="api-secret">9f6523b9c52e3317</key>
+  </config>
+
+  <operation>
+    <search skip="%param:page_offset%">
+      <result>
+        <rest oauth="true" endpoint="http://api.flickr.com/services/rest/">
+          <!-- <function>flickr.photos.search</function> -->
+          <param name="method">flickr.photos.search</param>
+          <param name="extras">media,date_taken,owner_name,url_o,url_t</param>
+          <param name="text">%param:search_text%</param>
+          <param name="format">rest</param>
+          <param name="page">%param:page_number%</param>
+          <param name="per_page">%param:page_size%</param>
+        </rest>
+      </result>
+    </search>
+  </operation>
+
+  <provide>
+    <media type="image" query="/rsp/photos//photo">
+      <key name="id">@id</key>
+      <key name="title">@title</key>
+      <priv name="test">@title</priv>
+    </media>
+  </provide>
+
+</source>

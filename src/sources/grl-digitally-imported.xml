@@ -1,0 +1,58 @@
+<source api="1">
+  <id>grl-digitally-imported</id>
+  <name>Digitally Imported</name>
+  <description>Digitally Imported is an Internet radio broadcaster playing various types of electronic dance music such as trance, progressive techno, eurodance and house and more across 35 separate streaming channels</description>
+
+  <operation>
+    <browse>
+      <result format="xml" cache="0" id="results">
+        <regexp>
+          <regexp>
+            <input>
+              <replace>
+                <input>
+                  <regexp>
+                    <input>
+                      <url>http://www.di.fm</url>
+                    </input>
+                    <output><![CDATA[\1\n\2\n]]></output>
+                    <expression repeat="true"><![CDATA[(?m)<a href="#">([^<]+?)</a>|<a href="(.+?\.pls)">40k]]></expression>
+                  </regexp>
+                </input>
+                <replacement/>
+                <expression>Listen Now\!\n+|MP3\n+|AAC-HE\n+|Windows Media\n+|My DI\n+|Calendar\n+|Community\n+|Company\n+|Volunteer\n+</expression>
+              </replace>
+            </input>
+            <output id="entries"><![CDATA[<pl><title>\1</title><link>\2</link></pl>]]></output>
+            <expression repeat="true">(.+?)\n+(.+?)\n+</expression>
+          </regexp>
+          <input ref="entries"/>
+          <output><![CDATA[<root>\1</root>]]></output>
+        </regexp>
+      </result>
+    </browse>
+
+    <resolve>
+      <require>
+        <key name="id">^http</key>
+      </require>
+      <result ref="results"/>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/root/pl"
+           select="/root/pl[link='%key:id%']">
+      <key name="id">link</key>
+      <key name="title" force="true">title</key>
+      <key name="url" slow="true">
+        <regexp>
+          <input><url>link</url></input>
+          <expression>File1=(http.+)\n</expression>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+
+</source>

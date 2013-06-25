@@ -1,0 +1,61 @@
+<source api="1" user-agent="'radio.de 1.9.1 rv:37 (iPhone; iPhone OS 5.0; de_DE)">
+  <id>grl-online-radio</id>
+  <name>On-Line Radio</name>
+  <description>Radios from radio.io</description>
+
+  <operation>
+    <search id="search">
+      <result format="json" cache="0">
+        <url>http://rad.io/info/index/searchembeddedbroadcast?q=%param:search_text%&amp;start=%param:skip%&amp;rows=%param:count%</url>
+      </result>
+    </search>
+
+    <resolve id="resolve">
+      <require type="audio"/>
+      <result format="json">
+        <url>http://rad.io/info/broadcast/getbroadcastembedded?broadcast=%key:id%</url>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media ref="search"
+           type="audio"
+           format="json"
+           query="$[*]">
+      <key name="id">['id']</key>
+      <key name="title">['name']</key>
+      <key name="thumbnail">
+        <regexp>
+          <regexp>
+            <input>['pictureBaseURL']</input>
+            <output id="base"/>
+          </regexp>
+          <input>['picture1Name']</input>
+          <output>%buf:base%\1</output>
+        </regexp>
+      </key>
+      <key name="url" slow="true" use="resolve"/>
+    </media>
+
+    <media ref="resolve"
+           type="audio"
+           format="json"
+           select="$">
+      <key name="id" force="true">['id']</key>
+      <key name="title">['name']</key>
+      <key name="url">['streamURL']</key>
+      <key name="thumbnail">
+        <regexp>
+          <regexp>
+            <input>['pictureBaseURL']</input>
+            <output id="base"/>
+          </regexp>
+          <input>['picture1Name']</input>
+          <output>%buf:base%\1</output>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+
+</source>

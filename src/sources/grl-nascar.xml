@@ -1,0 +1,36 @@
+<source api="1">
+  <id>grl-nascar</id>
+  <name>Nascar Videos</name>
+  <description>Videos from nascar.com</description>
+
+  <operation>
+    <browse skip="%param:skip%" count="%param:count%">
+      <result cache="300" id="result">
+        <url>http://i.cdn.turner.com/nascar/feeds/partners/embeded_player/latest.xml</url>
+      </result>
+    </browse>
+    <resolve>
+      <require>
+        <key name="id">.+</key>
+      </require>
+      <result ref="result"/>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="video" query="/NASCAR/ITEM" select="/NASCAR/ITEM[URL/@ID='%key:id%'">
+      <key name="id">URL/@ID</key>
+      <key name="title">TITLE</key>
+      <key name="description">DESCRIPTION</key>
+      <key name="site">URL/SITEURL</key>
+      <key name="thumbnail">IMAGE</key>
+      <key name="url">
+        <regexp>
+          <input>URL/@ID</input>
+          <output>http://ht.cdn.turner.com/nascar/big/\1.nascar_640x360.mp4</output>
+        </regexp>
+      </key>
+      </media>
+  </provide>
+
+</source>

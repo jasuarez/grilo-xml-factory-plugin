@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="expandableString">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="resultFormatType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="xml"/>
+      <xs:enumeration value="json"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="useFormatType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="resolve"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="urlType">
+    <xs:complexContent>
+      <xs:extension base="fetchType">
+        <xs:attribute name="dump" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="restParamType">
+    <xs:simpleContent>
+      <xs:extension base="expandableString">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="restType">
+    <xs:sequence>
+      <xs:element name="function" type="expandableString" minOccurs="0"/>
+      <xs:element name="param"    type="restParamType"    minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="endpoint" type="xs:string"        use="required"/>
+    <xs:attribute name="method"   type="xs:string"        default="GET"/>
+    <xs:attribute name="oauth"    type="xs:boolean"       default="false"/>
+    <xs:attribute name="dump"     type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="replaceType">
+    <xs:sequence>
+      <xs:element name="input"       type="fetchType"/>
+      <xs:element name="replacement" type="expandableString" minOccurs="0"/>
+      <xs:element name="expression"  type="expandableString"/>
+    </xs:sequence>
+    <xs:attribute name="dump" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="regexpType">
+    <xs:sequence>
+      <xs:element name="regexp" type="regexpType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="input">
+        <xs:complexType>
+          <xs:complexContent>
+            <xs:extension base="fetchType">
+              <xs:attribute name="ref" type="xs:string"/>
+            </xs:extension>
+          </xs:complexContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="output" minOccurs="0">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="expandableString">
+              <xs:attribute name="id" type="xs:string"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="expression" minOccurs="0">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="expandableString">
+              <xs:attribute name="repeat" type="xs:boolean" default="false"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="dump" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:simpleType name="mediaType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="audio"/>
+      <xs:enumeration value="video"/>
+      <xs:enumeration value="image"/>
+      <xs:enumeration value="box"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="keyType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="requireKeyType">
+    <xs:sequence>
+      <xs:element name="key" type="keyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="type" type="mediaType"/>
+  </xs:complexType>
+
+  <xs:complexType name="provideKeyType">
+    <xs:complexContent>
+      <xs:extension base="fetchType">
+        <xs:attribute name="name"  type="xs:string"  use="required"/>
+        <xs:attribute name="force" type="xs:boolean" default="false"/>
+        <xs:attribute name="slow"  type="xs:boolean" default="false"/>
+        <xs:attribute name="use"   type="useFormatType"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="providePrivateType">
+    <xs:simpleContent>
+      <xs:extension base="expandableString">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="provideType">
+    <xs:sequence>
+      <xs:element name="media" type="provideMediaType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="debug" type="xs:boolean" default="false"/>
+  </xs:complexType>
+
+  <xs:complexType name="configType">
+    <xs:sequence>
+      <xs:element name="key" type="keyType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="stringType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="id" type="xs:string"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="stringsType">
+    <xs:sequence>
+      <xs:element name="string" type="stringType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="lang" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="fetchType" mixed="true">
+    <xs:choice>
+      <xs:element name="url"     type="urlType"     minOccurs="0"/>
+      <xs:element name="rest"    type="restType"    minOccurs="0"/>
+      <xs:element name="regexp"  type="regexpType"  minOccurs="0"/>
+      <xs:element name="replace" type="replaceType" minOccurs="0"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="resultType">
+    <xs:complexContent>
+      <xs:extension base="fetchType">
+        <xs:attribute name="format" type="resultFormatType" default="xml"/>
+        <xs:attribute name="cache"  type="xs:nonNegativeInteger"/>
+        <xs:attribute name="id"     type="xs:string"/>
+        <xs:attribute name="ref"    type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="searchOperationType">
+    <xs:sequence>
+      <xs:element name="result" type="resultType"/>
+    </xs:sequence>
+    <xs:attribute name="id"    type="xs:string"/>
+    <xs:attribute name="skip"  type="expandableString"/>
+    <xs:attribute name="count" type="expandableString"/>
+  </xs:complexType>
+
+  <xs:complexType name="browseOperationType">
+    <xs:sequence>
+      <xs:element name="require" type="requireKeyType" minOccurs="0"/>
+      <xs:element name="result"  type="resultType"/>
+    </xs:sequence>
+    <xs:attribute name="id"    type="xs:string"/>
+    <xs:attribute name="skip"  type="expandableString"/>
+    <xs:attribute name="count" type="expandableString"/>
+  </xs:complexType>
+
+  <xs:complexType name="resolveOperationType">
+    <xs:sequence>
+      <xs:element name="require" type="requireKeyType" minOccurs="0"/>
+      <xs:element name="result"  type="resultType"/>
+    </xs:sequence>
+    <xs:attribute name="id"  type="xs:string"/>
+    <xs:attribute name="key" type="xs:string"/>
+    <xs:attribute name="any" type="xs:boolean"/>
+  </xs:complexType>
+
+  <xs:complexType name="provideMediaType">
+    <xs:sequence>
+      <xs:element name="key"  type="provideKeyType"     maxOccurs="unbounded"/>
+      <xs:element name="priv" type="providePrivateType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="ref"    type="xs:string"/>
+    <xs:attribute name="format" type="resultFormatType" default="xml"/>
+    <xs:attribute name="type"   type="mediaType"        use="required"/>
+    <xs:attribute name="query"  type="expandableString"/>
+    <xs:attribute name="select" type="expandableString"/>
+  </xs:complexType>
+
+  <xs:complexType name="supportedOperationType">
+    <xs:sequence>
+      <xs:element name="search"  type="searchOperationType"  minOccurs="0"/>
+      <xs:element name="browse"  type="browseOperationType"  minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="resolve" type="resolveOperationType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="debug" type="xs:boolean" default="false"/>
+  </xs:complexType>
+
+  <xs:element name="source">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="id"          type="xs:string"/>
+        <xs:element name="name"        type="xs:string"/>
+        <xs:element name="description" type="xs:string"   minOccurs="0"/>
+        <xs:element name="config"      type="configType"  minOccurs="0"/>
+        <xs:element name="strings"     type="stringsType" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="operation"   type="supportedOperationType"/>
+        <xs:element name="provide"     type="provideType"/>
+      </xs:sequence>
+      <xs:attribute name="api"        type="xs:positiveInteger" use="required"/>
+      <xs:attribute name="autosplit"  type="xs:positiveInteger"/>
+      <xs:attribute name="user-agent" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

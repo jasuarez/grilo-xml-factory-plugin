@@ -1,0 +1,94 @@
+<source api="1" user-agent="BBC News 1.7.1 (iPhone; iPhone OS 4.0.1; en_GB)">
+  <id>grl-bbc-news</id>
+  <name>BBC Video News</name>
+  <description>Videos from BBC News</description>
+
+  <config>
+    <key name="device">iphone</key>
+    <key name="bandwidth">wifi</key>
+  </config>
+
+
+  <operation>
+    <browse skip="%param:skip%" count="%param:count%">
+      <require>
+        <key name="id">^$</key>
+      </require>
+      <result format="json" cache="0" id="categories">
+        <url>http://www.bbc.co.uk/moira/feeds/iphone/news/en-GB/v1</url>
+      </result>
+    </browse>
+
+    <browse skip="%param:skip%" count="%param:count%">
+      <require>
+        <key name="id">^http://www.bbc.co.uk</key>
+      </require>
+      <result>
+        <url>%priv:feed_url%</url>
+      </result>
+    </browse>
+
+    <resolve>
+      <require>
+        <key name="id">^http://www.bbc.co.uk</key>
+      </require>
+      <result ref="categories"/>
+    </resolve>
+
+    <resolve>
+      <require type="video"/>
+      <result>
+        <url>%priv:feed_url%</url>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="box"
+           format="json"
+           query="$['feeds'][0]['feeds'][*]"
+           select="$['feeds'][0]['feeds'][?(@['feed_url']=='%key:id%')]">
+      <key name="id">['feed_url']</key>
+      <key name="title">['title']</key>
+      <priv name="feed_url">['feed_url']</priv>
+    </media>
+
+    <media xmlns:a="http://www.w3.org/2005/Atom"
+           xmlns:media="http://search.yahoo.com/mrss/"
+           type="video"
+           query="/a:feed/a:entry[*//*[starts-with(@href, 'bbcvideo')]]"
+           select="/a:feed/a:entry[a:id='%key:id%']">
+      <key name="id">a:id</key>
+      <key name="title">a:title</key>
+      <key name="description">a:summary</key>
+      <key name="thumbnail">
+        <regexp>
+          <regexp>
+            <input>media:thumbnail/@url</input>
+            <output id="1">\1/%conf:device%/\2</output>
+            <expression>bbcimage://.+/(www.bbc.co.uk.+)/%7bdevice%7d/(.+)</expression>
+          </regexp>
+          <input ref="1"/>
+          <output>http://\1</output>
+        </regexp>
+      </key>
+      <key name="url" slow="true">
+        <regexp>
+          <input>
+            <url>
+              <regexp>
+                <input>*//*[starts-with(@href, 'bbcvideo')]/@href</input>
+                <output>http://www.bbc.co.uk/moira/avod/%conf:device%/\1/%conf:bandwidth%</output>
+                <expression>bbcvideo://.+/...device.../(.+)/...bandwidth...</expression>
+              </regexp>
+            </url>
+          </input>
+          <output>http://news.downloads.bbc.co.uk.edgesuite.net/\1.mp4?at=\2</output>
+          <expression>(mps_h264_400.*?512k),.+hmac=([a-z0-9]+)</expression>
+        </regexp>
+      </key>
+      <priv name="feed_url">"%priv:feed_url%"</priv>
+    </media>
+  </provide>
+
+</source>

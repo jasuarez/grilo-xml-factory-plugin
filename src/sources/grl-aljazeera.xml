@@ -1,0 +1,26 @@
+<source api="1">
+  <id>grl-aljazeera</id>
+  <name>Al Jazeera</name>
+  <description>Drawing on the legacy of the groundbreaking Al Jazeera Arabic channel, Al Jazeera English was launched on November 15, 2006 to more than 80 million households worldwide. The 24-hour news and current affairs channel is the first international English-language news channel to broadcast across the globe from the Middle East. Al Jazeera's global footprint continues to grow and now broadcasts to more than 220 million households on six continents in more than 100 countries. Our channel is broadcast from four strategic broadcast centres: Doha, Kuala Lumpur, London, and Washington DC. Unlike other international channels, we broadcast from our different centres, as the world turns, providing the most comprehensive and contextual news coverage. Our mission is to provide independent, impartial news for an international audience and to offer a voice to a diversity of perspectives from under-reported regions. In addition, the channel aims to balance the information flow between the South and the North. The channel of reference for the Middle East and Africa, Al Jazeera has unique access to some of the world’s most troubled and controversial locations. Our determination and ability to accurately reflect the truth on the ground in regions torn by conflict and poverty has set our content apart.</description>
+
+  <operation>
+    <browse>
+      <result id="results"><![CDATA[<root><live><id>live</id><title>Al Jazeera Live</title><url>rtmp://aljazeeraflashlivefs.fplive.net:1935/aljazeeraflashlive-live/aljazeera_english_1 live=true</url></live></root>]]></result>
+    </browse>
+
+    <resolve>
+      <result ref="results"/>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="video"
+           query="/root/live"
+           select="/root/live[id='%key:id%']">
+      <key name="id">id</key>
+      <key name="title">title</key>
+      <key name="url">url</key>
+    </media>
+  </provide>
+
+</source>

@@ -1,0 +1,66 @@
+<source api="1">
+  <id>grl-live-streams</id>
+  <name>TV Live Streams</name>
+  <description>Get access to online video live streams</description>
+  <config>
+    <!-- <key name="source">http://people.igalia.com/jasuarez/livestreams.xml</key> -->
+    <key name="source">http://www.xbmchub.com/blog/?file=15&amp;downloadkey=dae986aa849d95ac13855f2f689e2a14</key>
+  </config>
+
+  <operation>
+    <search id="search_items">
+      <result cache="0" id="sourcefile">
+        <replace>
+          <input><url>%conf:source%</url></input>
+          <replacement><![CDATA[&amp;]]></replacement>
+          <expression><![CDATA[&(?!amp;)]]></expression>
+        </replace>
+      </result>
+    </search>
+
+    <browse id="root">
+      <require>
+        <key name="id">^$</key>
+      </require>
+      <result ref="sourcefile"/>
+    </browse>
+
+    <browse id="channel">
+      <require>
+        <key name="id">.+</key>
+      </require>
+      <result ref="sourcefile"/>
+    </browse>
+  </operation>
+
+  <provide>
+    <!-- list of channels -->
+    <media ref="root"
+           type="box"
+           query="/channels/channel">
+      <key name="id" force="true">name</key>
+      <key name="title">name</key>
+      <key name="thumbnail">thumbnail</key>
+    </media>
+
+    <!-- list of items -->
+    <media ref="channel"
+           type="video"
+           query="/channels/channel[name='%key:id%']/items/item">
+      <key name="id" force="true">link</key>
+      <key name="title">title</key>
+      <key name="url">link</key>
+      <key name="thumbnail">thumbnail</key>
+    </media>
+
+    <media ref="search_items"
+           type="video"
+           query="/channels/channel/items/item[title[contains(text(), '%param:search_text%')]]">
+      <key name="id" force="true">link</key>
+      <key name="title">title</key>
+      <key name="url">link</key>
+      <key name="thumbnail">thumbnail</key>
+    </media>
+  </provide>
+
+</source>

@@ -1,0 +1,37 @@
+<source api="1">
+  <id>grl-tmdb-xml</id>
+  <name>TMDb XML Provider</name>
+  <!-- this is a comment -->
+  <description>Retrieves content from The Open Movie Database (TMDb)</description>
+
+  <config>
+    <key name="api-key">719b9b296835b04cd919c4bf5220828a</key>
+    <!-- Valid values for thumbnail size are: 'thumb', 'w154', 'cover', 'w342', 'mid' and original -->
+    <key name="thumbnail-size">cover</key>
+  </config>
+
+  <operation>
+    <resolve key="thumbnail" any="true">
+      <require type="video">
+        <key name="title"/>
+      </require>
+      <result>
+        <url>
+          <replace>
+            <input>http://api.themoviedb.org/2.1/Movie.search/en/xml/%conf:api-key%/%key:title%</input>
+            <replacement>+</replacement>
+            <expression>[[:space:]]</expression>
+          </replace>
+        </url>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="video"
+           select="/OpenSearchDescription/movies/movie[1]/images/image[@type='poster' and @size='%conf:thumbnail-size%']">
+      <key name="thumbnail">@url</key>
+    </media>
+  </provide>
+
+</source>

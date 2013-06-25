@@ -1,0 +1,27 @@
+<source api="1" autosplit="8">
+  <id>grl-google-images</id>
+  <name>Google Images</name>
+  <description>Images from Google Search service</description>
+
+  <operation>
+    <search>
+      <result format="json">
+        <url>http://ajax.googleapis.com/ajax/services/search/images?v=1.0&amp;start=%param:skip%&amp;rsz=%param:count%&amp;q=%param:search_text%</url>
+      </result>
+    </search>
+  </operation>
+
+  <provide>
+    <media format="json"
+           type="image"
+           query="$['responseData']['results'][*]">
+      <key name="id">['imageId']</key>
+      <key name="title">['titleNoFormatting']</key>
+      <key name="width">['width']</key>
+      <key name="height">['height']</key>
+      <key name="thumbnail">['tbUrl']</key>
+      <key name="url">['unescapedUrl']</key>
+    </media>
+  </provide>
+
+</source>
