@@ -2559,15 +2559,17 @@ operation_call_send_xml_results (OperationCallData *data)
   matching_templates = g_list_reverse (matching_templates);
   matching_xpath = g_list_reverse (matching_xpath);
 
+  pt = matching_templates;
+  px = matching_xpath;
+
   /* Skip results */
   GRL_XML_DEBUG (data->source,
                  GRL_XML_DEBUG_PROVIDE,
                  "Skipping %d results",
                  data->skip);
-  pt = g_list_nth (matching_templates, data->skip);
 
   /* There are no more elements */
-  if (!pt) {
+  if (data->total_results <= data->skip) {
     GRL_XML_DEBUG_LITERAL (data->source,
                            GRL_XML_DEBUG_PROVIDE,
                            "No results to send");
@@ -2579,7 +2581,6 @@ operation_call_send_xml_results (OperationCallData *data)
     return FALSE;
   }
 
-  px = g_list_nth (matching_xpath, data->skip);
   data->total_results -= data->skip;
   data->total_results = MIN (data->total_results, data->count);
 
@@ -2595,7 +2596,7 @@ operation_call_send_xml_results (OperationCallData *data)
       media_template = (MediaTemplate *) pt->data;
       media_template_xpath_reffed = (DataRef *) px->data;
       media_template_xpath = (xmlXPathObjectPtr) dataref_value (media_template_xpath_reffed);
-      for (i = 0; i < media_template_xpath->nodesetval->nodeNr && pending > 0; i++) {
+      for (i = data->skip; i < media_template_xpath->nodesetval->nodeNr && pending > 0; i++) {
         keys = merge_lists (data->keys, media_template->mandatory_keys);
         send_item = send_item_new ();
         GRL_XML_DEBUG (data->source,
@@ -2666,6 +2667,7 @@ operation_call_send_xml_results (OperationCallData *data)
         g_list_free (keys);
         pending--;
       }
+      data->skip -= MIN (data->skip, media_template_xpath->nodesetval->nodeNr);
       pt = g_list_next (pt);
       px = g_list_next (px);
     }
@@ -2682,6 +2684,7 @@ static gboolean
 operation_call_send_json_results (OperationCallData *data)
 {
   DataRef *get_raw_data_reffed;
+  ExpandableString *json_query;
   FetchData *fetch_data;
   FetchItemData *fetch_item;
   GList *k;
@@ -2712,16 +2715,33 @@ operation_call_send_json_results (OperationCallData *data)
   root_node = json_parser_get_root (data->json_parser);
 
   /* Scan all media templates, finding those that match the results */
+  GRL_XML_DEBUG_LITERAL (data->source,
+                         GRL_XML_DEBUG_PROVIDE,
+                         "Selecting JSON provide template");
   for (pt = data->source->priv->media_templates;
        pt && data->total_results < (data->skip + data->count);
        pt = g_list_next (pt)) {
     media_template = (MediaTemplate *) pt->data;
+
+    GRL_XML_DEBUG (data->source,
+                   GRL_XML_DEBUG_PROVIDE,
+                   "Testing template in line %ld",
+                   media_template->line_number);
+
     if (media_template->format != FORMAT_JSON) {
+      GRL_XML_DEBUG_LITERAL (data->source,
+                             GRL_XML_DEBUG_PROVIDE,
+                             "Failed: not a JSON template");
       continue;
     }
 
     if (media_template->operation_id &&
         g_strcmp0 (media_template->operation_id, data->operation->id) != 0) {
+      GRL_XML_DEBUG (data->source,
+                     GRL_XML_DEBUG_PROVIDE,
+                     "Failed: expected operation id '%s', current is '%s'",
+                     media_template->operation_id,
+                     data->operation->id);
       continue;
     }
 
@@ -2737,7 +2757,7 @@ operation_call_send_json_results (OperationCallData *data)
         } else {
           json_found_nodes = json_path_query (json_path, root_node, NULL);
         }
-        expandable_string_free_value (media_template->select, json_path);
+        json_query = media_template->select;
       }
     } else {
       if (media_template->query) {
@@ -2749,11 +2769,16 @@ operation_call_send_json_results (OperationCallData *data)
         } else {
           json_found_nodes = json_path_query (json_path, root_node, NULL);
         }
-        expandable_string_free_value (media_template->query, json_path);
+        json_query = media_template->query;
       }
     }
 
     if (!json_found_nodes && !json_array) {
+      GRL_XML_DEBUG (data->source,
+                     GRL_XML_DEBUG_PROVIDE,
+                     "Failed: JSON '%s' return no values",
+                     json_path);
+      expandable_string_free_value (json_query, json_path);
       continue;
     }
 
@@ -2764,18 +2789,34 @@ operation_call_send_json_results (OperationCallData *data)
     json_array_length = json_array_get_length (json_array);
 
     if (json_array_length == 0) {
+      GRL_XML_DEBUG (data->source,
+                     GRL_XML_DEBUG_PROVIDE,
+                     "Failed: JSON '%s' return no values",
+                     json_path);
       if (json_found_nodes) {
         json_node_free (json_found_nodes);
       } else {
         json_array_unref (json_array);
       }
+      expandable_string_free_value (json_query, json_path);
       continue;
     }
+
+    expandable_string_free_value (json_query, json_path);
+
+    GRL_XML_DEBUG (data->source,
+                   GRL_XML_DEBUG_PROVIDE,
+                   "Using template in line %ld",
+                   media_template->line_number);
 
     matching_templates = g_list_prepend (matching_templates, media_template);
     matching_json_path = g_list_prepend (matching_json_path,
                                          json_array_ref (json_array));
     data->total_results += json_array_length;
+    GRL_XML_DEBUG (data->source,
+                   GRL_XML_DEBUG_PROVIDE,
+                   "Obtained %d results",
+                   json_array_length);
 
     if (json_found_nodes) {
       json_node_free (json_found_nodes);
@@ -2787,11 +2828,20 @@ operation_call_send_json_results (OperationCallData *data)
   matching_templates = g_list_reverse (matching_templates);
   matching_xpath = g_list_reverse (matching_xpath);
 
+  pt = matching_templates;
+  px = matching_xpath;
+
   /* Skip results */
-  pt = g_list_nth (matching_templates, data->skip);
+  GRL_XML_DEBUG (data->source,
+                 GRL_XML_DEBUG_PROVIDE,
+                 "Skipping %d results",
+                 data->skip);
 
   /* There are no more elements */
-  if (!pt) {
+  if (data->total_results <= data->skip) {
+    GRL_XML_DEBUG_LITERAL (data->source,
+                           GRL_XML_DEBUG_PROVIDE,
+                           "No results to send");
     data->callback (NULL, 0, data->user_data, NULL);
     operation_call_data_free (data);
     g_list_free (matching_templates);
@@ -2799,7 +2849,6 @@ operation_call_send_json_results (OperationCallData *data)
     return FALSE;
   }
 
-  px = g_list_nth (matching_json_path, data->skip);
   data->total_results -= data->skip;
   data->total_results = MIN (data->total_results, data->count);
 
@@ -2807,13 +2856,21 @@ operation_call_send_json_results (OperationCallData *data)
     operation_call_send_list_run (data);
   } else {
     pending = data->total_results;
+    GRL_XML_DEBUG (data->source,
+                   GRL_XML_DEBUG_PROVIDE,
+                   "Sending %d results",
+                   data->total_results);
     while (pending > 0) {
       media_template = (MediaTemplate *) pt->data;
       json_array = (JsonArray *) px->data;
       json_array_length = json_array_get_length (json_array);
-      for (i = 0; i < json_array_length && pending > 0; i++) {
+      for (i = data->skip; i < json_array_length && pending > 0; i++) {
         keys = merge_lists (data->keys, media_template->mandatory_keys);
         send_item = send_item_new ();
+        GRL_XML_DEBUG (data->source,
+                       GRL_XML_DEBUG_PROVIDE,
+                       "Creating %s media",
+                       gtype_to_string (media_template->media_type));
         send_item->media = g_object_new (media_template->media_type, NULL);
         send_item->pending_count = g_list_length (keys);
         data->send_list = g_list_append (data->send_list, send_item);
@@ -2831,6 +2888,11 @@ operation_call_send_json_results (OperationCallData *data)
              prdata_list = g_list_next (prdata_list)) {
           prdata = (PrivateData *) prdata_list->data;
           prvalue = get_raw_from_path (data->source, prdata->data, NULL, get_raw_data_reffed);
+          GRL_XML_DEBUG (data->source,
+                         GRL_XML_DEBUG_PROVIDE,
+                         "Adding \"%s\" private key: \"%s\"",
+                         prdata->name,
+                         prvalue);
           g_object_set_data_full (G_OBJECT (send_item->media), prdata->name, prvalue, g_free);
         }
 
@@ -2876,6 +2938,7 @@ operation_call_send_json_results (OperationCallData *data)
         g_list_free (keys);
         pending--;
       }
+      data->skip -= MIN (data->skip, json_array_length);
       pt = g_list_next (pt);
       px = g_list_next (px);
     }
