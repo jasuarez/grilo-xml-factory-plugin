@@ -2691,7 +2691,6 @@ operation_call_send_json_results (OperationCallData *data)
   GList *keys;
   GList *matching_json_path = NULL;
   GList *matching_templates = NULL;
-  GList *matching_xpath = NULL;
   GList *prdata_list;
   GList *pt;
   GList *px;
@@ -2826,10 +2825,10 @@ operation_call_send_json_results (OperationCallData *data)
   }
 
   matching_templates = g_list_reverse (matching_templates);
-  matching_xpath = g_list_reverse (matching_xpath);
+  matching_json_path = g_list_reverse (matching_json_path);
 
   pt = matching_templates;
-  px = matching_xpath;
+  px = matching_json_path;
 
   /* Skip results */
   GRL_XML_DEBUG (data->source,
