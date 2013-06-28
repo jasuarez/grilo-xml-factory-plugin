@@ -2757,6 +2757,12 @@ operation_call_send_json_results (OperationCallData *data)
           json_found_nodes = json_path_query (json_path, root_node, NULL);
         }
         json_query = media_template->select;
+      } else {
+          GRL_XML_DEBUG (data->source,
+                         GRL_XML_DEBUG_PROVIDE,
+                         "Failed: no select attribute for this media",
+                         NULL);
+          continue;
       }
     } else {
       if (media_template->query) {
@@ -2769,6 +2775,12 @@ operation_call_send_json_results (OperationCallData *data)
           json_found_nodes = json_path_query (json_path, root_node, NULL);
         }
         json_query = media_template->query;
+      } else {
+          GRL_XML_DEBUG (data->source,
+                         GRL_XML_DEBUG_PROVIDE,
+                         "Failed: no query attribute for this media",
+                         NULL);
+          continue;
       }
     }
 
