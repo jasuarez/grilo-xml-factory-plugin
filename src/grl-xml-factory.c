@@ -2204,7 +2204,7 @@ expandable_string_to_number (ExpandableString *exp_str,
   gchar *str;
   guint str_number;
 
-  str = expandable_string_get_value (exp_str, expand_data, NULL);
+  str = expandable_string_get_value (exp_str, expand_data);
   if (str) {
     str_number = (guint) g_ascii_strtoull (str, NULL, 10);
     expandable_string_free_value (exp_str, str);
@@ -2221,7 +2221,6 @@ expandable_string_to_number (ExpandableString *exp_str,
 static gchar *
 get_raw_from_path (GrlXmlFactorySource *source,
                    ExpandableString *raw,
-                   GHashTable *regexp_buffers,
                    DataRef *data)
 {
   GError *error = NULL;
@@ -2239,9 +2238,8 @@ get_raw_from_path (GrlXmlFactorySource *source,
   xmlXPathObjectPtr xpath_value;
 
   raw_data = dataref_value (data);
-  expanded_raw = expandable_string_get_value (raw,
-                                              raw_data->expand_data,
-                                              regexp_buffers);
+  expanded_raw = expandable_string_get_value (raw, raw_data->expand_data);
+
   if (!expanded_raw) {
     return NULL;
   }
@@ -2330,14 +2328,13 @@ get_raw_from_path (GrlXmlFactorySource *source,
 static gchar *
 get_raw_from_operation (GrlXmlFactorySource *source,
                         ExpandableString *raw,
-                        GHashTable *regexp_buffers,
                         DataRef *data)
 {
   ExpandData *expand_data;
 
   expand_data = dataref_value (data);
 
-  return expandable_string_get_value (raw, expand_data, regexp_buffers);
+  return expandable_string_get_value (raw, expand_data);
 }
 
 static void
@@ -2492,7 +2489,7 @@ operation_call_send_xml_results (OperationCallData *data)
 
     if (data->operation_type == OP_RESOLVE) {
       if (media_template->select) {
-        xpath = expandable_string_get_value (media_template->select, data->expand_data, NULL);
+        xpath = expandable_string_get_value (media_template->select, data->expand_data);
         media_template_xpath = xmlXPathEvalExpression ((const xmlChar *) xpath, xml_ctx);
         if (!media_template_xpath) {
           GRL_XML_DEBUG (data->source,
@@ -2512,7 +2509,7 @@ operation_call_send_xml_results (OperationCallData *data)
       }
     } else {
       if (media_template->query) {
-        xpath = expandable_string_get_value (media_template->query, data->expand_data, NULL);
+        xpath = expandable_string_get_value (media_template->query, data->expand_data);
         media_template_xpath = xmlXPathEvalExpression ((const xmlChar *) xpath, xml_ctx);
         if (!media_template_xpath) {
           GRL_XML_DEBUG (data->source,
@@ -2625,7 +2622,7 @@ operation_call_send_xml_results (OperationCallData *data)
              prdata_list;
              prdata_list = g_list_next (prdata_list)) {
           prdata = (PrivateData *) prdata_list->data;
-          prvalue = get_raw_from_path (data->source, prdata->data, NULL, get_raw_data_reffed);
+          prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
           GRL_XML_DEBUG (data->source,
                          GRL_XML_DEBUG_PROVIDE,
                          "Adding \"%s\" private key: \"%s\"",
@@ -2750,7 +2747,7 @@ operation_call_send_json_results (OperationCallData *data)
     json_array = NULL;
     if (data->operation_type == OP_RESOLVE) {
       if (media_template->select) {
-        json_path = expandable_string_get_value (media_template->select, data->expand_data, NULL);
+        json_path = expandable_string_get_value (media_template->select, data->expand_data);
         /* Special case: "$" represents the root node */
         if (json_path[0] == '$' && json_path[1] == '\0') {
           json_array = json_array_new ();
@@ -2760,15 +2757,14 @@ operation_call_send_json_results (OperationCallData *data)
         }
         json_query = media_template->select;
       } else {
-          GRL_XML_DEBUG (data->source,
-                         GRL_XML_DEBUG_PROVIDE,
-                         "Failed: no select attribute for this media",
-                         NULL);
-          continue;
+        GRL_XML_DEBUG_LITERAL (data->source,
+                               GRL_XML_DEBUG_PROVIDE,
+                               "Failed: no select attribute for this media");
+        continue;
       }
     } else {
       if (media_template->query) {
-        json_path = expandable_string_get_value (media_template->query, data->expand_data, NULL);
+        json_path = expandable_string_get_value (media_template->query, data->expand_data);
         /* Special case: "$" represents the root node */
         if (json_path[0] == '$' && json_path[1] == '\0') {
           json_array = json_array_new ();
@@ -2778,10 +2774,9 @@ operation_call_send_json_results (OperationCallData *data)
         }
         json_query = media_template->query;
       } else {
-          GRL_XML_DEBUG (data->source,
-                         GRL_XML_DEBUG_PROVIDE,
-                         "Failed: no query attribute for this media",
-                         NULL);
+          GRL_XML_DEBUG_LITERAL (data->source,
+                                 GRL_XML_DEBUG_PROVIDE,
+                                 "Failed: no query attribute for this media");
           continue;
       }
     }
@@ -2900,7 +2895,7 @@ operation_call_send_json_results (OperationCallData *data)
              prdata_list;
              prdata_list = g_list_next (prdata_list)) {
           prdata = (PrivateData *) prdata_list->data;
-          prvalue = get_raw_from_path (data->source, prdata->data, NULL, get_raw_data_reffed);
+          prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
           GRL_XML_DEBUG (data->source,
                          GRL_XML_DEBUG_PROVIDE,
                          "Adding \"%s\" private key: \"%s\"",

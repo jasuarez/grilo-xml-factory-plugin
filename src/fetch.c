@@ -45,7 +45,6 @@ typedef struct _RegexpProcessData {
   ExpressionProcessData common;
   FetchData *data;
   GList *current_subregexp;
-  GHashTable *subregexp_buffers;
 } RegexpProcessData;
 
 typedef struct _ReplaceProcessData {
@@ -131,9 +130,6 @@ static void
 regexp_process_data_free (RegexpProcessData *data)
 {
   expression_process_data_free (&(data->common));
-  if (data->subregexp_buffers) {
-    g_hash_table_unref (data->subregexp_buffers);
-  }
   g_slice_free (RegexpProcessData, data);
 }
 
@@ -160,8 +156,7 @@ fetch_replace_input_obtained (const gchar *input,
   }
 
   expanded_expression = expandable_string_get_value (data->replace->expression,
-                                                     data->common.net_data->expand_data,
-                                                     NULL);
+                                                     data->common.net_data->expand_data);
 
   if ((regex = g_regex_new (expanded_expression, 0, 0, NULL)) == NULL) {
     data->common.net_data->callback (NULL, data->common.net_data->user_data, NULL);
@@ -173,8 +168,7 @@ fetch_replace_input_obtained (const gchar *input,
 
   if (data->replace->replacement) {
     expanded_replacement = expandable_string_get_value (data->replace->replacement,
-                                                        data->common.net_data->expand_data,
-                                                        NULL);
+                                                        data->common.net_data->expand_data);
   } else {
     expanded_replacement = "";
   }
@@ -216,8 +210,7 @@ fetch_regexp_input_obtained (const gchar *input,
   //if (data->data.regexp->expression->expression) {
   if (data->data->data.regexp->expression->expression) {
     expanded_expression = expandable_string_get_value (data->data->data.regexp->expression->expression,
-                                                       data->common.net_data->expand_data,
-                                                       data->subregexp_buffers);
+                                                       data->common.net_data->expand_data);
 
     if ((regex = g_regex_new (expanded_expression, 0, 0, NULL)) == NULL) {
       data->common.net_data->callback (NULL, data->common.net_data->user_data, NULL);
@@ -235,8 +228,7 @@ fetch_regexp_input_obtained (const gchar *input,
 
   if (data->data->data.regexp->output) {
     expanded_output = expandable_string_get_value (data->data->data.regexp->output,
-                                                   data->common.net_data->expand_data,
-                                                   data->subregexp_buffers);
+                                                   data->common.net_data->expand_data);
   } else {
     expanded_output = "\\1";
   }
@@ -279,7 +271,7 @@ fetch_regexp_subregexp_obtained (const gchar *subregexp,
 
   if (subregexp) {
     current_subregexp = (FetchData *) data->current_subregexp->data;
-    g_hash_table_insert (data->subregexp_buffers, current_subregexp->data.regexp->output_id, g_strdup (subregexp));
+    expand_data_add_buffer (data->common.net_data->expand_data, current_subregexp->data.regexp->output_id, subregexp);
   }
   data->current_subregexp = g_list_next (data->current_subregexp);
   fetch_subregexp (data);
@@ -380,7 +372,7 @@ fetch_rest (GrlXmlFactorySource *source,
   call = rest_proxy_new_call (fetch_data->data.rest->proxy);
 
   if (fetch_data->data.rest->function) {
-    use_function = get_raw_callback (source, fetch_data->data.rest->function, NULL, get_raw_data);
+    use_function = get_raw_callback (source, fetch_data->data.rest->function, get_raw_data);
     if (!use_function) {
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
@@ -396,7 +388,7 @@ fetch_rest (GrlXmlFactorySource *source,
        parameters;
        parameters = g_list_next (parameters)) {
     param = (RestParameter *) parameters->data;
-    use_value = get_raw_callback (source, param->value, NULL, get_raw_data);
+    use_value = get_raw_callback (source, param->value, get_raw_data);
     if (!use_value) {
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
@@ -435,7 +427,7 @@ fetch_rest (GrlXmlFactorySource *source,
 static void
 fetch_subregexp (RegexpProcessData *data)
 {
-  const gchar *input = NULL;
+  const gchar *input;
 
   if (data->current_subregexp) {
     fetch_regexp (data->common.net_data->source,
@@ -450,10 +442,8 @@ fetch_subregexp (RegexpProcessData *data)
                   data);
   } else {
     if (data->data->data.regexp->input->use_ref) {
-      if (data->subregexp_buffers) {
-        input = g_hash_table_lookup (data->subregexp_buffers,
-                                     data->data->data.regexp->input->data.buffer_id);
-      }
+      input = expand_data_get_buffer (data->common.net_data->expand_data,
+                                      data->data->data.regexp->input->data.buffer_id);
       fetch_regexp_input_obtained (input, data, NULL);
     } else {
       fetch_data_get (data->common.net_data->source,
@@ -497,7 +487,6 @@ fetch_regexp (GrlXmlFactorySource *source,
   rp_data->data = fetch_data;
   if (fetch_data->data.regexp->subregexp) {
     rp_data->current_subregexp = fetch_data->data.regexp->subregexp;
-    rp_data->subregexp_buffers = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
   }
   fetch_subregexp (rp_data);
 }
@@ -689,7 +678,7 @@ fetch_data_get (GrlXmlFactorySource *source,
   gchar *use_raw;
 
   if (fetch_data->type == FETCH_RAW) {
-    use_raw = get_raw_callback (source, fetch_data->data.raw, NULL, get_raw_data);
+    use_raw = get_raw_callback (source, fetch_data->data.raw, get_raw_data);
     GRL_XML_DEBUG (source, debug_flag, "Use '%s'", use_raw);
     send_callback (use_raw, user_data, NULL);
     expandable_string_free_value (fetch_data->data.raw, use_raw);

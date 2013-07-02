@@ -45,7 +45,6 @@ typedef void (*DataFetchedCb) (const gchar *content,
 
 typedef gchar *(*GetRawCb) (GrlXmlFactorySource *source,
                             ExpandableString *raw,
-                            GHashTable *regexp_buffers,
                             DataRef *data);
 
 typedef struct _FetchData FetchData;

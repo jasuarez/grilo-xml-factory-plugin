@@ -39,6 +39,13 @@ ExpandData *expand_data_ref (ExpandData *data);
 
 void expand_data_unref (ExpandData *data);
 
+void expand_data_add_buffer (ExpandData *data,
+                             const gchar *buffer_id,
+                             const gchar *buffer_content);
+
+const gchar *expand_data_get_buffer (ExpandData *data,
+                                     const gchar *buffer_id);
+
 ExpandableString *expandable_string_new (const gchar *init,
                                          GrlConfig *config,
                                          GList *located_strings);
@@ -46,8 +53,7 @@ ExpandableString *expandable_string_new (const gchar *init,
 void expandable_string_free (ExpandableString *exp_str);
 
 gchar *expandable_string_get_value (ExpandableString *exp_str,
-                                    ExpandData *data,
-                                    GHashTable *regexp_buffers);
+                                    ExpandData *data);
 
 void expandable_string_free_value (ExpandableString *exp_str,
                                    gchar *value);
