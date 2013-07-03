@@ -1431,12 +1431,14 @@ xml_spec_get_replace (GrlXmlFactorySource *source,
   }
   replace_data->input = input_data;
 
-  /* Get the replacement */
+  /* Get the replacement, if available */
   xml_node = xml_get_node (xml_node->next);
-  replace_data->replacement = xml_spec_get_expandable_string (source, xml_node);
+  if (xmlStrcmp (xml_node->name, (const xmlChar *) "replacement") == 0) {
+    replace_data->replacement = xml_spec_get_expandable_string (source, xml_node);
+    xml_node = xml_get_node (xml_node->next);
+  }
 
   /* Get the expression */
-  xml_node = xml_get_node (xml_node->next);
   replace_data->expression = xml_spec_get_expandable_string (source, xml_node);
 
   return replace_data;
