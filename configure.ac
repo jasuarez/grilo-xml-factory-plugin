@@ -104,6 +104,31 @@ XML_FACTORY_SCHEMA_LOCATION="${datadir}/${XML_FACTORY_SOURCE_LOCATION}"
 AC_SUBST(XML_FACTORY_SCHEMA_LOCATION)
 
 # ----------------------------------------------------------
+# TESTS COVERAGE
+# ----------------------------------------------------------
+
+AC_ARG_ENABLE(gcov,
+        AC_HELP_STRING([--enable-gcov],
+                [enable coverage testing (default: no)]),
+        [enable_gcov=$enableval],
+        [enable_gcov=no])
+
+if test "x$enable_gcov" = "xyes"; then
+   AC_PATH_PROG([enable_gcov], [lcov], [no])
+   if test "x$enable_gcov" = "xno"; then
+      AC_MSG_ERROR([You need lcov to build with coverage testing])
+   elif test "x$GCC" = "xno"; then
+      AC_MSG_ERROR([You need to use gcc to build with coverage testing])
+   else
+      enable_gcov=yes
+      CFLAGS="$CFLAGS -g -O0 -fprofile-arcs -ftest-coverage"
+      LDFLAGS="$LDFLAGS -lgcov"
+   fi
+fi
+
+AM_CONDITIONAL([GCOV_ENABLED], [test "x$enable_gcov" = "xyes"])
+
+# ----------------------------------------------------------
 # WORKAROUNDS
 # ----------------------------------------------------------
 
@@ -118,6 +143,7 @@ AC_CONFIG_FILES([
   Makefile
   src/Makefile
   src/sources/Makefile
+  tests/Makefile
 ])
 
 AC_OUTPUT

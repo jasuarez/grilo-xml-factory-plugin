@@ -42,6 +42,14 @@ xmlfactoryxml_DATA   = $(XML_FACTORY_PLUGIN_ID).xml
 xsd_DATA = $(XML_FACTORY_PLUGIN_ID).xsd
 xsddir   = $(XML_FACTORY_SCHEMA_LOCATION)
 
+# This lets us test the plugin without installing it,
+# because grilo expects the .so and .xml files to be in
+# the same directory:
+copy-xml-to-libs-dir: libgrlxmlfactory.la
+	cp -f $(srcdir)/$(xmlfactoryxml_DATA) $(builddir)/.libs/
+
+all-local: copy-xml-to-libs-dir
+
 EXTRA_DIST =               \
    $(xmlfactoryxml_DATA)   \
    $(xsd_DATA)

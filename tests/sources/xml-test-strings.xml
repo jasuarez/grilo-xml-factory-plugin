@@ -1,0 +1,49 @@
+<source api="1">
+  <id>xml-test-strings</id>
+  <name>XML Test Strings</name>
+
+  <strings>
+    <string id="artist">Artist</string>
+    <string id="title">Title</string>
+    <string id="album">Album</string>
+  </strings>
+
+  <strings lang="es">
+    <string id="artist">Artista</string>
+    <string id="title">Titulo</string>
+  </strings>
+
+  <strings lang="fr">
+    <string id="artist">Artiste</string>
+    <string id="title">Titre</string>
+  </strings>
+
+  <strings lang="es_ES">
+    <string id="artist">Un Artista</string>
+  </strings>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <artist>%str:artist%</artist>
+                 <title>%str:title%</title>
+                 <license>%str:license%</license>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">"id"</key>
+      <key name="artist">artist</key>
+      <key name="album">"%str:album%"</key>
+      <key name="title">title</key>
+      <key name="license">license</key>
+    </media>
+  </provide>
+</source>
