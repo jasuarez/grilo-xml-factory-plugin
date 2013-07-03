@@ -1,0 +1,65 @@
+<source api="1">
+  <id>xml-test-replace</id>
+  <name>XML Test Replace</name>
+
+  <operation>
+    <resolve>
+      <require>
+        <key name="id">replace</key>
+      </require>
+      <result>
+        <replace>
+          <input>
+            <![CDATA[
+                     <data>
+                     <artist>anArtist</artist>
+                     <album>An Album</album>
+                     </data>
+            ]]>
+          </input>
+          <replacement>My </replacement>
+          <expression>an</expression>
+        </replace>
+      </result>
+    </resolve>
+
+    <resolve>
+      <require>
+        <key name="id">remove</key>
+      </require>
+      <result>
+        <replace>
+          <input>
+            <![CDATA[
+                     <data>
+                     <artist>anArtist</artist>
+                     <title>A Title</title>
+                     </data>
+            ]]>
+          </input>
+          <expression>an</expression>
+        </replace>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           select="/data">
+      <key name="artist">artist</key>
+      <key name="album">
+        <replace>
+          <input>album</input>
+          <replacement>This</replacement>
+          <expression>An</expression>
+        </replace>
+      </key>
+      <key name="title">
+        <replace>
+          <input>title</input>
+          <expression>A </expression>
+        </replace>
+      </key>
+    </media>
+  </provide>
+</source>
