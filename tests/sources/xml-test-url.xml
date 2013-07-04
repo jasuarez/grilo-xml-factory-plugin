@@ -1,0 +1,24 @@
+<source api="1">
+  <id>xml-test-url</id>
+  <name>XML Test URL</name>
+
+  <operation>
+    <browse>
+      <result>
+        <url>http://www.test.com/url-test.xml</url>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">"id"</key>
+      <key name="artist">artist</key>
+      <key name="album">
+        <url>"http://www.test.com/url-test-album.txt"</url>
+      </key>
+      <key name="title">title</key>
+    </media>
+  </provide>
+</source>
