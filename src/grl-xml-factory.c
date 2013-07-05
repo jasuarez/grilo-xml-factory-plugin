@@ -1289,7 +1289,7 @@ xml_spec_get_rest (GrlXmlFactorySource *source,
       }
 
       api_token = grl_config_get_api_token (source->priv->config);
-      api_token_secret = grl_config_get_string (source->priv->config, "api-token-secret");
+      api_token_secret = grl_config_get_api_token_secret (source->priv->config);
       rest_proxy = oauth_proxy_new_with_token (api_key, api_secret,
                                                api_token, api_token_secret,
                                                endpoint, FALSE);
