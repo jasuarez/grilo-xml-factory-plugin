@@ -12,6 +12,7 @@ INCLUDES = @DEPS_CFLAGS@
 TEST_PROGS +=     \
    test_replace   \
    test_url       \
+   test_regexp    \
    test_strings
 
 #check_PROGRAMS = $(TESTS)
@@ -46,6 +47,15 @@ test_url_LDADD =	\
 test_url_CFLAGS =	\
 	$(test_xml_factory_defines)
 
+test_regexp_SOURCES = \
+	test_regexp.c
+
+test_regexp_LDADD =	\
+	@DEPS_LIBS@
+
+test_regexp_CFLAGS =	\
+	$(test_xml_factory_defines)
+
 test_strings_SOURCES =	\
 	test_strings.c
 
@@ -56,13 +66,17 @@ test_strings_CFLAGS =	\
 	$(test_xml_factory_defines)
 
 # Distribute the tests data:
-dist_noinst_DATA =                     \
-   data/network-data.ini               \
-   data/test-url.data                  \
-   data/test-url-album.data            \
-   sources/xml-test-replace.xml        \
-   sources/xml-test-url.xml            \
-   sources/xml-test-empty-strings.xml  \
+dist_noinst_DATA =                                 \
+   data/network-data.ini                           \
+   data/test-url.data                              \
+   data/test-url-album.data                        \
+   sources/xml-test-replace.xml                    \
+   sources/xml-test-url.xml                        \
+   sources/xml-test-empty-strings.xml              \
+   sources/xml-test-regexp-full.xml                \
+   sources/xml-test-regexp-no-expression.xml       \
+   sources/xml-test-regexp-no-output.xml           \
+   sources/xml-test-regexp-repeat-expression.xml   \
    sources/xml-test-strings.xml
 
 noinst_PROGRAMS = $(TEST_PROGS)

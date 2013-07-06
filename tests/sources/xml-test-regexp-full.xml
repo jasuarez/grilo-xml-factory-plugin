@@ -1,0 +1,31 @@
+<source api="1">
+  <id>xml-test-regexp-full</id>
+  <name>XML Test RegExp Full</name>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <id>My Id</id>
+                 <title>My Testing Title</title>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">id</key>
+      <key name="title">
+        <regexp>
+          <input>title</input>
+          <output>Your \1 '\2'</output>
+          <expression>(\w+)\s(\w+)$</expression>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+</source>

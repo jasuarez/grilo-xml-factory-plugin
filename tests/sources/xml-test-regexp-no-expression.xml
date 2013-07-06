@@ -1,0 +1,30 @@
+<source api="1">
+  <id>xml-test-regexp-no-expression</id>
+  <name>XML Test RegExp No Expression</name>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <id>My Id</id>
+                 <title>My Testing Title</title>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">id</key>
+      <key name="title">
+        <regexp>
+          <input>title</input>
+          <output>This Is \1 Twice</output>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+</source>

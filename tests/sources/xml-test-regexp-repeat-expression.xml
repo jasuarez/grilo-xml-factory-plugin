@@ -1,0 +1,31 @@
+<source api="1">
+  <id>xml-test-regexp-repeat-expression</id>
+  <name>XML Test RegExp Repeat Expression</name>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <id>My Id</id>
+                 <title>My Testing Title</title>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">id</key>
+      <key name="title">
+        <regexp>
+          <input>title</input>
+          <output>\1 and </output>
+          <expression repeat="true">(\w+)\s</expression>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+</source>
