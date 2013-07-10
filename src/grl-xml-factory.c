@@ -272,8 +272,8 @@ static void xml_spec_get_basic_info (xmlNodePtr xml_node,
                                      gchar **id,
                                      gchar **name,
                                      gchar **description,
-                                     xmlNodePtr *config,
                                      xmlNodePtr *strings,
+                                     xmlNodePtr *config,
                                      xmlNodePtr *operation,
                                      xmlNodePtr *provide);
 
@@ -281,8 +281,7 @@ static GrlConfig *xml_spec_get_config (xmlNodePtr xml_config_node,
                                        const gchar *source_id,
                                        GList **config_keys);
 
-static void xml_spec_get_strings (GrlXmlFactorySource *source,
-                                  xmlNodePtr xml_node);
+static GList* xml_spec_get_strings (xmlNodePtr xml_node);
 
 static MediaTemplate *xml_spec_get_provide_media_template (GrlXmlFactorySource *source,
                                                            xmlNodePtr xml_node,
@@ -456,8 +455,11 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
                             gint max_version,
                             GList *configs)
 {
+  ExpandableString *expandable_source_description;
+  ExpandableString *expandable_source_name;
   GHashTable *required_keys;
   GList *config_keys = NULL;
+  GList *located_strings = NULL;
   GList *operation;
   GList *requirement;
   GrlConfig *default_config;
@@ -557,8 +559,8 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   /* Get source basic information */
   xml_node = xml_get_node (xml_node->children);
   xml_spec_get_basic_info (xml_node, &source_id, &source_name,
-                           &source_description, &xml_config,
-                           &xml_strings, &xml_operation, &xml_provide);
+                           &source_description, &xml_strings,
+                           &xml_config, &xml_operation, &xml_provide);
 
   /* Check config */
   default_config = xml_spec_get_config (xml_config, source_id, &config_keys);
@@ -578,14 +580,31 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
     return NULL;
   }
 
+  /* Get located strings */
+  if (xml_strings) {
+    located_strings = xml_spec_get_strings (xml_strings);
+  }
+
+  /* Expand source name and description */
+  expandable_source_name = expandable_string_new (source_name,
+                                                  merged_config,
+                                                  located_strings);
+
+  expandable_source_description = expandable_string_new (source_description,
+                                                         merged_config,
+                                                         located_strings);
   GrlXmlFactorySource *source =
     g_object_new (GRL_XML_FACTORY_SOURCE_TYPE,
                   "source-id", source_id,
-                  "source-name", source_name,
-                  "source-desc", source_description,
+                  "source-name", expandable_string_get_value (expandable_source_name, NULL),
+                  "source-desc", expandable_string_get_value (expandable_source_description, NULL),
                   NULL);
 
+  expandable_string_free (expandable_source_name);
+  expandable_string_free (expandable_source_description);
+
   source->priv->config = merged_config;
+  source->priv->located_strings = located_strings;
 
   if (user_agent) {
     source->priv->user_agent = user_agent;
@@ -596,11 +615,6 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   g_free (source_name);
   g_free (source_description);
   g_list_free_full (config_keys, g_free);
-
-  /* Add the located strings */
-  if (xml_strings) {
-    xml_spec_get_strings (source, xml_strings);
-  }
 
   /* Check supported operations */
   debug = xml_get_property_boolean (xml_operation, (const xmlChar *) "debug");
@@ -1552,8 +1566,8 @@ xml_spec_get_basic_info (xmlNodePtr xml_node,
                          gchar **id,
                          gchar **name,
                          gchar **description,
-                         xmlNodePtr *config,
                          xmlNodePtr *strings,
+                         xmlNodePtr *config,
                          xmlNodePtr *operation,
                          xmlNodePtr *provide)
 {
@@ -1570,13 +1584,6 @@ xml_spec_get_basic_info (xmlNodePtr xml_node,
     *description = NULL;
   }
 
-  if (xmlStrcmp (xml_node->name, (const xmlChar *) "config") == 0) {
-    *config = xml_get_node (xml_node->children);
-    xml_node = xml_get_node (xml_node->next);
-  } else {
-    *config = NULL;
-  }
-
   if (xmlStrcmp (xml_node->name, (const xmlChar *) "strings") == 0) {
     *strings = xml_node;
     do {
@@ -1584,6 +1591,13 @@ xml_spec_get_basic_info (xmlNodePtr xml_node,
     } while (xmlStrcmp (xml_node->name, (const xmlChar *) "strings") == 0);
   } else {
     *strings = NULL;
+  }
+
+  if (xmlStrcmp (xml_node->name, (const xmlChar *) "config") == 0) {
+    *config = xml_get_node (xml_node->children);
+    xml_node = xml_get_node (xml_node->next);
+  } else {
+    *config = NULL;
   }
 
   *operation = xml_node;
@@ -1646,11 +1660,11 @@ xml_spec_get_located_strings (xmlNodePtr xml_node)
 
 /* Stores the pre-defined strings, using only those that makes sense for the
    current language */
-static void
-xml_spec_get_strings (GrlXmlFactorySource *source,
-                      xmlNodePtr xml_node)
+static GList *
+xml_spec_get_strings (xmlNodePtr xml_node)
 {
   GHashTable **defined_strings_set;
+  GList *located_strings = NULL;
   const gchar * const *current_languages;
   gchar *language;
   gint i;
@@ -1697,15 +1711,16 @@ xml_spec_get_strings (GrlXmlFactorySource *source,
 
   /* Now, add the defined and supported languages in a list, order by the
      priority of the language (the more specific first) */
-  source->priv->located_strings = NULL;
   for (i = 0; i < g_strv_length ((gchar **) current_languages); i++) {
     if (defined_strings_set[i]) {
-      source->priv->located_strings = g_list_append (source->priv->located_strings,
-                                                     defined_strings_set[i]);
+      located_strings = g_list_append (located_strings,
+                                       defined_strings_set[i]);
     }
   }
 
   g_free (defined_strings_set);
+
+  return located_strings;
 }
 
 static gint

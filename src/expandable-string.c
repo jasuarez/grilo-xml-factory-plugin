@@ -67,18 +67,30 @@ expand_pattern(gboolean deinit)
 inline static gchar *
 expand_data_get_search_text (ExpandData *data)
 {
+  if (!data) {
+    return NULL;
+  }
+
   return g_strdup (data->search_text);
 }
 
 inline static gchar *
 expand_data_get_skip (ExpandData *data)
 {
+  if (!data) {
+    return NULL;
+  }
+
   return g_strdup_printf ("%d", grl_operation_options_get_skip (data->options));
 }
 
 inline static gchar *
 expand_data_get_count (ExpandData *data)
 {
+  if (!data) {
+    return NULL;
+  }
+
   return g_strdup_printf ("%d", grl_operation_options_get_count (data->options));
 }
 
@@ -86,6 +98,10 @@ static gchar *
 expand_data_get_page_number (ExpandData *data)
 {
   guint page_number = 0;
+
+  if (!data) {
+    return NULL;
+  }
 
   grl_paging_translate (grl_operation_options_get_skip (data->options),
                         grl_operation_options_get_count (data->options),
@@ -102,6 +118,10 @@ expand_data_get_page_size (ExpandData *data)
 {
   guint page_size = 0;
 
+  if (!data) {
+    return NULL;
+  }
+
   grl_paging_translate (grl_operation_options_get_skip (data->options),
                         grl_operation_options_get_count (data->options),
                         data->max_page_size,
@@ -116,6 +136,10 @@ static gchar *
 expand_data_get_page_offset (ExpandData *data)
 {
   guint page_offset = 0;
+
+  if (!data) {
+    return NULL;
+  }
 
   grl_paging_translate (grl_operation_options_get_skip (data->options),
                         grl_operation_options_get_count (data->options),
@@ -136,7 +160,7 @@ expand_remaining_cb (const GMatchInfo *match_info,
 
   match = g_match_info_fetch (match_info, 0);
 
-  /* Special case: '%%' is expandd by single '%' */
+  /* Special case: '%%' is expanded by single '%' */
   if (strlen (match) == 2) {
     g_string_append (result, "%");
     g_free (--match);
@@ -189,7 +213,8 @@ expand_metadata_key_cb (const GMatchInfo *match_info,
   }
 
   /* If it has not got a value, use an empty value */
-  if (!expand_data->media ||
+  if (!expand_data ||
+      !expand_data->media ||
       !grl_data_has_key (GRL_DATA (expand_data->media), key)) {
     g_free (--match);
     g_strfreev (match_tokens);
@@ -248,7 +273,8 @@ expand_private_cb (const GMatchInfo *match_info,
   }
 
   /* Search the private value */
-  if (!expand_data->media) {
+  if (!expand_data ||
+      !expand_data->media) {
     g_free (--match);
     g_strfreev (match_tokens);
     return TRUE;
@@ -396,7 +422,6 @@ expand_param_cb (const GMatchInfo *match_info,
       param_value = expand_data_get_page_offset (data);
     } else {
       GRL_WARNING ("Invalid parameter '%s'", param_name);
-      param_value = g_strdup ("");
     }
     match--;
   }
@@ -440,7 +465,7 @@ expand_buffer_id_cb (const GMatchInfo *match_info,
     return FALSE;
   }
 
-  if (data->regexp_buffers) {
+  if (data && data->regexp_buffers) {
     buffer_content = g_hash_table_lookup (data->regexp_buffers, buffer_id);
     if (buffer_content) {
       g_string_append (result, buffer_content);

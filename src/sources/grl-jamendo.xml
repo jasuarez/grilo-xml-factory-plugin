@@ -1,9 +1,10 @@
 <source api="1" autosplit="100">
   <id>grl-jamendo-xml</id>
   <name>Jamendo XML</name>
-  <description>A source for browsing and searching Jamendo music</description>
+  <description>%str:source description%</description>
 
   <strings>
+    <string id="source description">A source for browsing and searching Jamendo music</string>
     <string id="artists">Artists</string>
     <string id="albums">Albums</string>
     <string id="feeds">Feeds</string>
@@ -16,6 +17,7 @@
   </strings>
 
   <strings lang="es">
+    <string id="source description">Fuente para navegar y buscar música en Jamendo</string>
     <string id="artists">Artistas</string>
     <string id="albums">Albumes</string>
     <string id="feeds">Proveedores</string>

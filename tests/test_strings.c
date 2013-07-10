@@ -86,6 +86,10 @@ test_normal_strings (void)
   options = grl_operation_options_new (NULL);
   g_assert (options);
 
+  g_assert_cmpstr (grl_source_get_name (source),
+                   ==,
+                   "XML Prueba de Cadenas");
+
   medias = grl_source_browse_sync (source,
                                    NULL,
                                    grl_source_supported_keys (source),

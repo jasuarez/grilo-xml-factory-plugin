@@ -1,14 +1,16 @@
 <source api="1">
   <id>xml-test-strings</id>
-  <name>XML Test Strings</name>
+  <name>%str:source name%</name>
 
   <strings>
+    <string id="source name">XML Test Strings</string>
     <string id="artist">Artist</string>
     <string id="title">Title</string>
     <string id="album">Album</string>
   </strings>
 
   <strings lang="es">
+    <string id="source name">XML Prueba de Cadenas</string>
     <string id="artist">Artista</string>
     <string id="title">Titulo</string>
   </strings>

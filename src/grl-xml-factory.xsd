@@ -232,10 +232,10 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element name="id"          type="xs:string"/>
-        <xs:element name="name"        type="xs:string"/>
-        <xs:element name="description" type="xs:string"   minOccurs="0"/>
-        <xs:element name="config"      type="configType"  minOccurs="0"/>
-        <xs:element name="strings"     type="stringsType" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="name"        type="expandableString"/>
+        <xs:element name="description" type="expandableString" minOccurs="0"/>
+        <xs:element name="strings"     type="stringsType"      minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="config"      type="configType"       minOccurs="0"/>
         <xs:element name="operation"   type="supportedOperationType"/>
         <xs:element name="provide"     type="provideType"/>
       </xs:sequence>
