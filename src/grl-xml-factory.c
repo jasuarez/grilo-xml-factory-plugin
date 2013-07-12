@@ -190,6 +190,7 @@ struct _GrlXmlFactorySourcePrivate {
   gchar *user_agent;
   GrlXmlDebug debug;
   gint autosplit;
+  GrlKeyID private_keys_key;
 };
 
 gboolean grl_xml_factory_plugin_init (GrlRegistry *registry,
@@ -298,6 +299,8 @@ void handle_schema_warnings (void *ctx,
                              const gchar *msg,
                              ...);
 
+GrlKeyID GRL_METADATA_KEY_PRIVATE_KEYS = 0;
+
 /* =================== XML Factory Plugin  =============== */
 
 
@@ -306,8 +309,10 @@ grl_xml_factory_plugin_init (GrlRegistry *registry,
                              GrlPlugin *plugin,
                              GList *configs)
 {
+  GError *error = NULL;
   GList *source_xml_specs;
   GList *spec;
+  GParamSpec *pspec;
   GrlXmlFactorySource *source;
   const gchar *supported_version;
   gboolean source_loaded = FALSE;
@@ -316,8 +321,22 @@ grl_xml_factory_plugin_init (GrlRegistry *registry,
   gint max_supported_version;
   xmlSchemaPtr source_schema;
 
-
   GRL_LOG_DOMAIN_INIT (xml_factory_log_domain, "xml-factory");
+
+  /* Register key to store private values */
+  pspec = g_param_spec_string ("xml-factory-private-keys",
+                               "XML Factory Private Keys",
+                               "XML Factory Private keys",
+                               NULL,
+                               G_PARAM_READWRITE);
+
+  GRL_METADATA_KEY_PRIVATE_KEYS = grl_registry_register_metadata_key (registry, pspec, &error);
+  if (!GRL_METADATA_KEY_PRIVATE_KEYS) {
+    GRL_WARNING ("Can't register \"xml-factory-private-keys\" key: %s", error->message);
+    g_error_free (error);
+
+    return FALSE;
+  }
 
   source_xml_specs = get_source_xml_specs ();
   source_schema = get_xml_schema ();
