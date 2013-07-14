@@ -13,7 +13,8 @@ TEST_PROGS +=     \
    test_replace   \
    test_url       \
    test_regexp    \
-   test_strings
+   test_strings   \
+	test_private_keys
 
 #check_PROGRAMS = $(TESTS)
 
@@ -65,6 +66,15 @@ test_strings_LDADD =	\
 test_strings_CFLAGS =	\
 	$(test_xml_factory_defines)
 
+test_private_keys_SOURCES =	\
+	test_private_keys.c
+
+test_private_keys_LDADD =	\
+	@DEPS_LIBS@
+
+test_private_keys_CFLAGS =	\
+	$(test_xml_factory_defines)
+
 # Distribute the tests data:
 dist_noinst_DATA =                                 \
    data/network-data.ini                           \
@@ -73,6 +83,7 @@ dist_noinst_DATA =                                 \
    sources/xml-test-replace.xml                    \
    sources/xml-test-url.xml                        \
    sources/xml-test-empty-strings.xml              \
+	sources/xml-test-private-keys.xml               \
    sources/xml-test-regexp-full.xml                \
    sources/xml-test-regexp-no-expression.xml       \
    sources/xml-test-regexp-no-output.xml           \

@@ -22,6 +22,7 @@
 
 #include "expandable-string.h"
 
+#include "json-ghashtable.h"
 #include <string.h>
 
 typedef enum {
@@ -39,6 +40,7 @@ struct _ExpandData {
   guint refcount;
   gchar *source_id;
   GrlMedia *media;
+  GHashTable *private_keys;
   gchar *search_text;
   GrlOperationOptions *options;
   guint max_page_size;
@@ -274,7 +276,7 @@ expand_private_cb (const GMatchInfo *match_info,
 
   /* Search the private value */
   if (!expand_data ||
-      !expand_data->media) {
+      !expand_data->private_keys) {
     g_free (--match);
     g_strfreev (match_tokens);
     return TRUE;
@@ -282,7 +284,7 @@ expand_private_cb (const GMatchInfo *match_info,
 
   /* Prepend source_id to the private name */
   priv_name = g_strconcat (expand_data->source_id, "::", priv_name, NULL);
-  priv_value = g_object_get_data (G_OBJECT (expand_data->media), priv_name);
+  priv_value = g_hash_table_lookup (expand_data->private_keys, priv_name);
   g_free (priv_name);
   if (priv_value) {
     g_string_append (result, priv_value);
@@ -564,6 +566,14 @@ expand_data_new (GrlXmlFactorySource *source,
 {
   ExpandData *p;
   guint autosplit;
+  static GrlKeyID GRL_METADATA_KEY_PRIVATE_KEYS = 0;
+  GrlRegistry *registry;
+
+  if (!GRL_METADATA_KEY_PRIVATE_KEYS) {
+    registry = grl_registry_get_default ();
+    GRL_METADATA_KEY_PRIVATE_KEYS = grl_registry_lookup_metadata_key (registry,
+                                                                      "xml-factory-private-keys");
+  }
 
   autosplit = grl_source_get_auto_split_threshold (GRL_SOURCE (source));
 
@@ -572,6 +582,10 @@ expand_data_new (GrlXmlFactorySource *source,
   g_object_get (G_OBJECT (source), "source-id", &(p->source_id), NULL);
   if (media) {
     p->media = g_object_ref (media);
+    p->private_keys = json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (media),
+                                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
+                                                        -1,
+                                                        NULL);
   } else {
     p->media = NULL;
   }
@@ -602,6 +616,9 @@ expand_data_unref (ExpandData *data)
   g_free (data->source_id);
   if (data->media) {
     g_object_unref (data->media);
+  }
+  if (data->private_keys) {
+    g_hash_table_unref (data->private_keys);
   }
   g_object_unref (data->options);
   g_free (data->search_text);

@@ -1,0 +1,43 @@
+<source api="1">
+  <id>xml-test-private-keys</id>
+  <name>XML Test Private Keys</name>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <title>My Title</title>
+                 <private>My private value</private>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+
+    <resolve>
+      <result>
+        <![CDATA[
+                 <rev>
+                 <artist>My artist named '%priv:pr%'</artist>
+                 <field>Another private value</field>
+                 </rev>
+        ]]>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">"id"</key>
+      <key name="title">title</key>
+      <priv name="pr">private</priv>
+    </media>
+
+    <media type="audio"
+           select="/rev">
+      <key name="artist">artist</key>
+      <priv name="privfield">field</priv>
+    </media>
+  </provide>
+</source>

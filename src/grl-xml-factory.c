@@ -31,6 +31,7 @@
 #include "dataref.h"
 #include "expandable-string.h"
 #include "fetch.h"
+#include "json-ghashtable.h"
 #include "log.h"
 
 #include <json-glib/json-glib.h>
@@ -1103,6 +1104,22 @@ find_rest_proxy (GList *proxy_list,
   return NULL;
 }
 
+static void
+merge_hashtables (GHashTable *t1,
+                  GHashTable *t2)
+{
+  GHashTableIter iter;
+  gchar *key;
+  gchar *value;
+
+  g_hash_table_iter_init (&iter, t2);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &key, (gpointer * )&value)) {
+    if (g_hash_table_lookup (t1, key) == NULL) {
+      g_hash_table_insert (t1, g_strdup (key), g_strdup (value));
+    }
+  }
+}
+
 static xmlSchemaPtr
 get_xml_schema ()
 {
@@ -2160,8 +2177,11 @@ resolve_send_result_cb (GrlMedia *media,
                         GrlSourceResolveSpec *rs,
                         GError *error)
 {
+  GHashTable *new_private_keys;
+  GHashTable *old_private_keys;
   GList *k;
   GList *keys;
+  gchar *new_private_keys_string;
 
   if (error && !error->code) {
     error->code = GRL_CORE_ERROR_RESOLVE_FAILED;
@@ -2169,6 +2189,45 @@ resolve_send_result_cb (GrlMedia *media,
 
   /* We need to update the media sent by user; so let's merge both medias */
   if (media) {
+    /* Merge private keys */
+
+    new_private_keys =
+      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (media),
+                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
+                                        -1,
+                                        NULL);
+    old_private_keys =
+      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (rs->media),
+                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
+                                        -1,
+                                        NULL);
+    if (new_private_keys) {
+      if (old_private_keys) {
+        merge_hashtables (new_private_keys, old_private_keys);
+        new_private_keys_string = json_ghashtable_serialize_data (new_private_keys, NULL);
+        g_hash_table_unref (old_private_keys);
+      } else {
+        new_private_keys_string = NULL;
+      }
+      g_hash_table_unref (new_private_keys);
+      if (new_private_keys_string) {
+        grl_data_set_string (GRL_DATA (media),
+                             GRL_METADATA_KEY_PRIVATE_KEYS,
+                             new_private_keys_string);
+        g_free (new_private_keys_string);
+      }
+    } else {
+      if (old_private_keys) {
+        new_private_keys_string = json_ghashtable_serialize_data (old_private_keys, NULL);
+        grl_data_set_string (GRL_DATA (media),
+                             GRL_METADATA_KEY_PRIVATE_KEYS,
+                             new_private_keys_string);
+        g_free (new_private_keys_string);
+        g_hash_table_unref (old_private_keys);
+      }
+    }
+
+    /* Merge remaining keys */
     keys = grl_data_get_keys (GRL_DATA (media));
 
     for (k = keys; k; k = g_list_next (k)) {
@@ -2453,6 +2512,7 @@ operation_call_send_xml_results (OperationCallData *data)
   ExpandableString *xpath_query;
   FetchData *fetch_data;
   FetchItemData *fetch_item;
+  GHashTable *private_keys;
   GList *k;
   GList *keys;
   GList *matching_templates = NULL;
@@ -2464,6 +2524,7 @@ operation_call_send_xml_results (OperationCallData *data)
   MediaTemplate *media_template;
   PrivateData *prdata;
   SendItem *send_item;
+  gchar *json_data;
   gchar *prvalue;
   gchar *xpath;
   gint pending;
@@ -2652,17 +2713,30 @@ operation_call_send_xml_results (OperationCallData *data)
         get_raw_data_reffed = dataref_new (get_raw_data, (GDestroyNotify) get_raw_data_free);
 
         /* First insert any private value */
-        for (prdata_list = media_template->private_keys;
-             prdata_list;
-             prdata_list = g_list_next (prdata_list)) {
-          prdata = (PrivateData *) prdata_list->data;
-          prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
-          GRL_XML_DEBUG (data->source,
-                         GRL_XML_DEBUG_PROVIDE,
-                         "Adding \"%s\" private key: \"%s\"",
-                         prdata->name,
-                         prvalue);
-          g_object_set_data_full (G_OBJECT (send_item->media), prdata->name, prvalue, g_free);
+        if (media_template->private_keys) {
+          private_keys = g_hash_table_new_full (g_str_hash,
+                                                g_str_equal,
+                                                g_free,
+                                                g_free);
+          for (prdata_list = media_template->private_keys;
+               prdata_list;
+               prdata_list = g_list_next (prdata_list)) {
+            prdata = (PrivateData *) prdata_list->data;
+            prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
+            GRL_XML_DEBUG (data->source,
+                           GRL_XML_DEBUG_PROVIDE,
+                           "Adding \"%s\" private key: \"%s\"",
+                           prdata->name,
+                           prvalue);
+            g_hash_table_insert (private_keys, g_strdup (prdata->name), prvalue);
+          }
+
+          json_data = json_ghashtable_serialize_data (private_keys, NULL);
+          grl_data_set_string (GRL_DATA (send_item->media),
+                               GRL_METADATA_KEY_PRIVATE_KEYS,
+                               json_data);
+          g_hash_table_unref (private_keys);
+          g_free (json_data);
         }
 
         /* Now add the keys */
@@ -2720,6 +2794,7 @@ operation_call_send_json_results (OperationCallData *data)
   ExpandableString *json_query;
   FetchData *fetch_data;
   FetchItemData *fetch_item;
+  GHashTable *private_keys;
   GList *k;
   GList *keys;
   GList *matching_json_path = NULL;
@@ -2734,6 +2809,7 @@ operation_call_send_json_results (OperationCallData *data)
   MediaTemplate *media_template;
   PrivateData *prdata;
   SendItem *send_item;
+  gchar *json_data;
   gchar *json_path;
   gchar *prvalue;
   gint pending;
@@ -2925,17 +3001,30 @@ operation_call_send_json_results (OperationCallData *data)
         get_raw_data_reffed = dataref_new (get_raw_data, (GDestroyNotify) get_raw_data_free);
 
         /* First insert any private value */
-        for (prdata_list = media_template->private_keys;
-             prdata_list;
-             prdata_list = g_list_next (prdata_list)) {
-          prdata = (PrivateData *) prdata_list->data;
-          prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
-          GRL_XML_DEBUG (data->source,
-                         GRL_XML_DEBUG_PROVIDE,
-                         "Adding \"%s\" private key: \"%s\"",
-                         prdata->name,
+        if (media_template->private_keys) {
+          private_keys = g_hash_table_new_full (g_str_hash,
+                                                g_str_equal,
+                                                NULL,
+                                                g_free);
+          for (prdata_list = media_template->private_keys;
+               prdata_list;
+               prdata_list = g_list_next (prdata_list)) {
+            prdata = (PrivateData *) prdata_list->data;
+            prvalue = get_raw_from_path (data->source, prdata->data, get_raw_data_reffed);
+            GRL_XML_DEBUG (data->source,
+                           GRL_XML_DEBUG_PROVIDE,
+                           "Adding \"%s\" private key: \"%s\"",
+                           prdata->name,
                          prvalue);
-          g_object_set_data_full (G_OBJECT (send_item->media), prdata->name, prvalue, g_free);
+            g_hash_table_insert (private_keys, prdata->name, prvalue);
+          }
+
+          json_data = json_ghashtable_serialize_data (private_keys, NULL);
+          grl_data_set_string (GRL_DATA (send_item->media),
+                               GRL_METADATA_KEY_PRIVATE_KEYS,
+                               json_data);
+          g_hash_table_unref (private_keys);
+          g_free (json_data);
         }
 
         /* Now add the keys */
