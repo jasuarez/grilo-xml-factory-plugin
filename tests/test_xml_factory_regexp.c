@@ -25,7 +25,7 @@
 #define XML_FACTORY_ID "grl-xml-factory"
 
 static void
-test_setup (void)
+test_xml_factory_setup (void)
 {
   GError *error = NULL;
   GrlRegistry *registry;
@@ -36,7 +36,7 @@ test_setup (void)
 }
 
 static void
-test_regexp_full (void)
+test_xml_factory_regexp_full (void)
 {
   GError *error = NULL;
   GList *medias;
@@ -71,7 +71,7 @@ test_regexp_full (void)
 }
 
 static void
-test_regexp_no_expression (void)
+test_xml_factory_regexp_no_expression (void)
 {
   GError *error = NULL;
   GList *medias;
@@ -106,7 +106,7 @@ test_regexp_no_expression (void)
 }
 
 static void
-test_regexp_no_output (void)
+test_xml_factory_regexp_no_output (void)
 {
   GError *error = NULL;
   GList *medias;
@@ -141,7 +141,7 @@ test_regexp_no_output (void)
 }
 
 static void
-test_regexp_repeat_expression (void)
+test_xml_factory_regexp_repeat_expression (void)
 {
   GError *error = NULL;
   GList *medias;
@@ -189,12 +189,12 @@ main(int argc, char **argv)
   g_thread_init (NULL);
 #endif
 
-  test_setup ();
+  test_xml_factory_setup ();
 
-  g_test_add_func ("/xml-factory/regexp/full", test_regexp_full);
-  g_test_add_func ("/xml-factory/regexp/no-expression", test_regexp_no_expression);
-  g_test_add_func ("/xml-factory/regexp/no-output", test_regexp_no_output);
-  g_test_add_func ("/xml-factory/regexp/repeat-expression", test_regexp_repeat_expression);
+  g_test_add_func ("/xml-factory/regexp/full", test_xml_factory_regexp_full);
+  g_test_add_func ("/xml-factory/regexp/no-expression", test_xml_factory_regexp_no_expression);
+  g_test_add_func ("/xml-factory/regexp/no-output", test_xml_factory_regexp_no_output);
+  g_test_add_func ("/xml-factory/regexp/repeat-expression", test_xml_factory_regexp_repeat_expression);
 
   return g_test_run ();
 }

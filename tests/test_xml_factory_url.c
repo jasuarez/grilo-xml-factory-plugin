@@ -25,7 +25,7 @@
 #define XML_FACTORY_ID "grl-xml-factory"
 
 static void
-test_setup (void)
+test_xml_factory_setup (void)
 {
   GError *error = NULL;
   GrlRegistry *registry;
@@ -36,7 +36,7 @@ test_setup (void)
 }
 
 static void
-test_url (void)
+test_xml_factory_url (void)
 {
   GError *error = NULL;
   GList *medias;
@@ -91,9 +91,9 @@ main(int argc, char **argv)
   g_thread_init (NULL);
 #endif
 
-  test_setup ();
+  test_xml_factory_setup ();
 
-  g_test_add_func ("/xml-factory/url", test_url);
+  g_test_add_func ("/xml-factory/url", test_xml_factory_url);
 
   return g_test_run ();
 }

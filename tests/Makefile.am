@@ -9,12 +9,12 @@ include $(top_srcdir)/gtester.mk
 
 INCLUDES = @DEPS_CFLAGS@
 
-TEST_PROGS +=     \
-   test_replace   \
-   test_url       \
-   test_regexp    \
-   test_strings   \
-	test_private_keys
+TEST_PROGS +=                 \
+   test_xml_factory_replace   \
+   test_xml_factory_url       \
+   test_xml_factory_regexp    \
+   test_xml_factory_strings   \
+   test_xml_factory_private_keys
 
 #check_PROGRAMS = $(TESTS)
 
@@ -30,49 +30,49 @@ test_xml_factory_defines =                                                      
    -DXML_FACTORY_SPECS_PATH=\""$(abs_top_srcdir)/tests/sources/"\"   \
    -DXML_FACTORY_DATA_PATH=\""$(abs_top_srcdir)/tests/data/"\"
 
-test_relace_SOURCES =	\
-	test_replace.c
+test_xml_factory_relace_SOURCES =	\
+	test_xml_factory_replace.c
 
-test_replace_LDADD =	\
+test_xml_factory_replace_LDADD =	\
 	@DEPS_LIBS@
 
-test_replace_CFLAGS =	\
+test_xml_factory_replace_CFLAGS =	\
 	$(test_xml_factory_defines)
 
-test_url_SOURCES =	\
-	test_url.c
+test_xml_factory_url_SOURCES =	\
+	test_xml_factory_url.c
 
-test_url_LDADD =	\
+test_xml_factory_url_LDADD =	\
 	@DEPS_LIBS@
 
-test_url_CFLAGS =	\
+test_xml_factory_url_CFLAGS =	\
 	$(test_xml_factory_defines)
 
-test_regexp_SOURCES = \
-	test_regexp.c
+test_xml_factory_regexp_SOURCES = \
+	test_xml_factory_regexp.c
 
-test_regexp_LDADD =	\
+test_xml_factory_regexp_LDADD =	\
 	@DEPS_LIBS@
 
-test_regexp_CFLAGS =	\
+test_xml_factory_regexp_CFLAGS =	\
 	$(test_xml_factory_defines)
 
-test_strings_SOURCES =	\
-	test_strings.c
+test_xml_factory_strings_SOURCES =	\
+	test_xml_factory_strings.c
 
-test_strings_LDADD =	\
+test_xml_factory_strings_LDADD =	\
 	@DEPS_LIBS@
 
-test_strings_CFLAGS =	\
+test_xml_factory_strings_CFLAGS =	\
 	$(test_xml_factory_defines)
 
-test_private_keys_SOURCES =	\
-	test_private_keys.c
+test_xml_factory_private_keys_SOURCES =	\
+	test_xml_factory_private_keys.c
 
-test_private_keys_LDADD =	\
+test_xml_factory_private_keys_LDADD =	\
 	@DEPS_LIBS@
 
-test_private_keys_CFLAGS =	\
+test_xml_factory_private_keys_CFLAGS =	\
 	$(test_xml_factory_defines)
 
 # Distribute the tests data:

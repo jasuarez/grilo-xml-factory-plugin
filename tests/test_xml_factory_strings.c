@@ -25,7 +25,7 @@
 #define XML_FACTORY_ID "grl-xml-factory"
 
 static void
-test_setup (void)
+test_xml_factory_setup (void)
 {
   GError *error = NULL;
   GrlRegistry *registry;
@@ -36,78 +36,75 @@ test_setup (void)
 }
 
 static void
-test_replace_replace (void)
+test_xml_factory_empty_strings (void)
 {
   GError *error = NULL;
+  GList *medias;
   GrlMedia *media;
   GrlOperationOptions *options;
   GrlRegistry *registry;
   GrlSource *source;
 
   registry = grl_registry_get_default ();
-  source = grl_registry_lookup_source (registry, "xml-test-replace");
+  source = grl_registry_lookup_source (registry, "xml-test-empty-strings");
   g_assert (source);
   options = grl_operation_options_new (NULL);
   g_assert (options);
 
-  media = grl_media_audio_new ();
-  grl_media_set_source (media, "xml-test-replace");
-  grl_media_set_id (media, "replace");
-
-  media = grl_source_resolve_sync (source,
-                                   media,
+  medias = grl_source_browse_sync (source,
+                                   NULL,
                                    grl_source_supported_keys (source),
                                    options,
                                    &error);
-
-  g_assert (media);
+  g_assert_cmpint (g_list_length(medias), ==, 1);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_get_id (media), ==, "replace");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
-                   ==,
-                   "My Artist");
-  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
-                   ==,
-                   "This Album");
+  media = (GrlMedia *) medias->data;
+
+  g_assert_cmpstr (grl_media_get_id (media), ==, "id");
+  g_assert (!grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)));
+  g_assert (!grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)));
+  g_assert (!grl_media_get_title (media));
 
   g_object_unref (media);
   g_object_unref (options);
 }
 
 static void
-test_replace_remove (void)
+test_xml_factory_normal_strings (void)
 {
   GError *error = NULL;
+  GList *medias;
   GrlMedia *media;
   GrlOperationOptions *options;
   GrlRegistry *registry;
   GrlSource *source;
 
   registry = grl_registry_get_default ();
-  source = grl_registry_lookup_source (registry, "xml-test-replace");
+  source = grl_registry_lookup_source (registry, "xml-test-strings");
   g_assert (source);
   options = grl_operation_options_new (NULL);
   g_assert (options);
 
-  media = grl_media_audio_new ();
-  grl_media_set_source (media, "xml-test-replace");
-  grl_media_set_id (media, "remove");
+  g_assert_cmpstr (grl_source_get_name (source),
+                   ==,
+                   "XML Prueba de Cadenas");
 
-  media = grl_source_resolve_sync (source,
-                                   media,
+  medias = grl_source_browse_sync (source,
+                                   NULL,
                                    grl_source_supported_keys (source),
                                    options,
                                    &error);
-
-  g_assert (media);
+  g_assert_cmpint (g_list_length (medias), ==, 1);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_get_id (media), ==, "remove");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
-                   ==,
-                   "Artist");
-  g_assert_cmpstr (grl_media_get_title (media), ==, "Title");
+  media = (GrlMedia *) medias->data;
+
+  g_assert_cmpstr (grl_media_get_id (media), ==, "id");
+  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)), ==, "Un Artista");
+  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)), ==, "Album");
+  g_assert_cmpstr (grl_media_get_title (media), ==, "Titulo");
+  g_assert (!grl_media_get_license (media));
 
   g_object_unref (media);
   g_object_unref (options);
@@ -119,6 +116,7 @@ main(int argc, char **argv)
   g_setenv ("GRL_PLUGIN_PATH", XML_FACTORY_PLUGIN_PATH, TRUE);
   g_setenv ("GRL_PLUGIN_LIST", XML_FACTORY_ID, TRUE);
   g_setenv ("GRL_XML_FACTORY_SPECS_PATH", XML_FACTORY_SPECS_PATH, TRUE);
+  g_setenv ("LANG", "es_ES.utf8", TRUE);
 
   grl_init (&argc, &argv);
   g_test_init (&argc, &argv, NULL);
@@ -127,10 +125,10 @@ main(int argc, char **argv)
   g_thread_init (NULL);
 #endif
 
-  test_setup ();
+  test_xml_factory_setup ();
 
-  g_test_add_func ("/xml-factory/replace/replace", test_replace_replace);
-  g_test_add_func ("/xml-factory/replace/remove", test_replace_remove);
+  g_test_add_func ("/xml-factory/strings/empty", test_xml_factory_empty_strings);
+  g_test_add_func ("/xml-factory/strings/normal", test_xml_factory_normal_strings);
 
   return g_test_run ();
 }
