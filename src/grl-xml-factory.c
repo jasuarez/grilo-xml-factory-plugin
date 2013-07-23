@@ -1506,6 +1506,11 @@ xml_spec_get_fetch_data (GrlXmlFactorySource *source,
   RestData *rest_data = NULL;
   gchar *dump_file;
 
+  /* Check if there is result */
+  if (!xml_node) {
+    return NULL;
+  }
+
   if (xml_node->type == XML_TEXT_NODE ||
       xml_node->type == XML_CDATA_SECTION_NODE) {
     raw = xml_spec_get_expandable_string (source, xml_node);
