@@ -1,0 +1,20 @@
+<source api="1">
+  <id>xml-test-result</id>
+  <name>XML Test Result</name>
+
+  <operation>
+    <!-- Test empty results -->
+    <browse>
+      <result/>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">"id"</key>
+      <key name="artist">artist</key>
+      <key name="title">title</key>
+    </media>
+  </provide>
+</source>
