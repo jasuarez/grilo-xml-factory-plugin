@@ -3290,6 +3290,9 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
     }
     req_list = g_list_next (req_list);
   }
+  if (!media) {
+      return FALSE;
+  }
 
   GRL_XML_DEBUG (factory_source,
                  GRL_XML_DEBUG_OPERATION,
