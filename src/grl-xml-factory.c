@@ -362,6 +362,11 @@ grl_xml_factory_plugin_init (GrlRegistry *registry,
 
   g_strfreev (supported_versions);
 
+  if (!source_xml_specs) {
+    xmlSchemaFree (source_schema);
+    return TRUE;
+  }
+
   for (spec = source_xml_specs; spec; spec = g_list_next (spec)) {
     source = grl_xml_factory_source_new (spec->data,
                                          source_schema,
