@@ -3,6 +3,17 @@
   <name>XML Test Private Keys</name>
 
   <operation>
+    <search>
+      <result>
+        <![CDATA[
+                 <data>
+                 <title>Search result title</title>
+                 <private>Search result private value</private>
+                 </data>
+        ]]>
+      </result>
+    </search>
+
     <browse>
       <result>
         <![CDATA[

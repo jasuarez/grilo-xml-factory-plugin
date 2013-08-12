@@ -40,8 +40,10 @@ test_xml_factory_private_keys (void)
 {
   GError *error = NULL;
   GList *medias;
+  GList *medias_searched;
   GrlKeyID private_keys_key;
   GrlMedia *media;
+  GrlMedia *media_searched;
   GrlOperationOptions *options;
   GrlRegistry *registry;
   GrlSource *source;
@@ -91,7 +93,27 @@ test_xml_factory_private_keys (void)
                    ==,
                    "{\"xml-test-private-keys::privfield\":\"Another private value\",\"xml-test-private-keys::pr\":\"My private value\"}");
 
+  medias_searched = grl_source_search_sync (source,
+                                            NULL,
+                                            grl_source_supported_keys (source),
+                                            options,
+                                            &error);
+  g_assert_cmpint (g_list_length(medias), ==, 1);
+  g_assert_no_error (error);
+
+  media_searched = (GrlMedia *) medias_searched->data;
+
+  g_assert_cmpstr (grl_media_get_id (media_searched), ==, "id");
+  g_assert_cmpstr (grl_media_get_title (media_searched),
+                   ==,
+                   "Search result title");
+
+  g_assert_cmpstr (grl_data_get_string (GRL_DATA (media_searched), private_keys_key),
+                   ==,
+                   "{\"xml-test-private-keys::pr\":\"Search result private value\"}");
+
   g_list_free_full (medias, g_object_unref);
+  g_list_free_full (medias_searched, g_object_unref);
   g_object_unref (options);
 }
 
