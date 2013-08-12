@@ -588,6 +588,7 @@ expand_data_new (GrlXmlFactorySource *source,
                                                         NULL);
   } else {
     p->media = NULL;
+    p->private_keys = NULL;
   }
   p->search_text = g_strdup (search_text);
   p->options = g_object_ref (options);
