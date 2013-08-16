@@ -379,8 +379,19 @@ fetch_rest (GrlXmlFactorySource *source,
       return;
     }
 
+    GRL_XML_DEBUG (source,
+                   debug_flag,
+                   "Invoking RESTful \"%s/%s",
+                   fetch_data->data.rest->endpoint,
+                   use_function? use_function: "");
+
     rest_proxy_call_set_function (call, use_function);
     expandable_string_free_value (fetch_data->data.rest->function, use_function);
+  } else {
+    GRL_XML_DEBUG (source,
+                   debug_flag,
+                   "Invoking RESTful \"%s",
+                   fetch_data->data.rest->endpoint);
   }
 
   /* Expand each of the parameters */
@@ -390,6 +401,10 @@ fetch_rest (GrlXmlFactorySource *source,
     param = (RestParameter *) parameters->data;
     use_value = get_raw_callback (source, param->value, get_raw_data);
     if (!use_value) {
+      GRL_XML_DEBUG (source,
+                     debug_flag,
+                     "Canot invoke RESTful: parameter \"%s\" can not be obtained",
+                     param->name);
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
       return;
@@ -621,6 +636,7 @@ rest_data_free (RestData *data)
   if (data->proxy) {
     g_object_unref (data->proxy);
   }
+  g_free (data->endpoint);
   g_free (data->method);
   expandable_string_free  (data->function);
 

@@ -1364,10 +1364,9 @@ xml_spec_get_rest (GrlXmlFactorySource *source,
     rest_proxy = g_object_ref (rest_proxy);
   }
 
-  g_free (endpoint);
-
   rest_data = rest_data_new ();
   rest_data->proxy = rest_proxy;
+  rest_data->endpoint = endpoint;
   rest_data->method = method;
 
   xml_child_node = xml_get_node (xml_node->children);
