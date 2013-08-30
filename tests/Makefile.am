@@ -32,7 +32,7 @@ test_xml_factory_defines =                                                      
    -DXML_FACTORY_DATA_PATH=\""$(abs_top_srcdir)/tests/data/"\"
 
 test_xml_factory_result_SOURCES =	\
-	test_xml_factory_replace.c
+	test_xml_factory_result.c
 
 test_xml_factory_result_LDADD =	\
 	@DEPS_LIBS@

@@ -38,27 +38,15 @@ test_xml_factory_setup (void)
 static void
 test_xml_factory_result_empty (void)
 {
-  GError *error = NULL;
-  GList *medias;
-  GrlOperationOptions *options;
   GrlRegistry *registry;
   GrlSource *source;
 
   registry = grl_registry_get_default ();
   source = grl_registry_lookup_source (registry, "xml-test-result");
   g_assert (source);
-  options = grl_operation_options_new (NULL);
-  g_assert (options);
 
-  medias = grl_source_browse_sync (source,
-                                   NULL,
-                                   grl_source_supported_keys (source),
-                                   options,
-                                   &error);
-  g_assert_cmpint (g_list_length(medias), ==, 0);
-  g_assert_no_error (error);
-
-  g_object_unref (options);
+  /* Operations with no results are ignored */
+  g_assert (!(grl_source_supported_operations (source) & GRL_OP_BROWSE));
 }
 
 int
