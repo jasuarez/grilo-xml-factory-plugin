@@ -66,7 +66,7 @@ test_xml_factory_regexp_full (void)
                    ==,
                    "Your Testing 'Title'");
 
-  g_object_unref (media);
+  g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
 }
 
@@ -101,7 +101,7 @@ test_xml_factory_regexp_no_expression (void)
                    ==,
                    "This Is My Testing Title Twice");
 
-  g_object_unref (media);
+  g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
 }
 
@@ -136,7 +136,7 @@ test_xml_factory_regexp_no_output (void)
                    ==,
                    "My");
 
-  g_object_unref (media);
+  g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
 }
 
@@ -171,7 +171,7 @@ test_xml_factory_regexp_repeat_expression (void)
                    ==,
                    "My and Testing and ");
 
-  g_object_unref (media);
+  g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
 }
 
