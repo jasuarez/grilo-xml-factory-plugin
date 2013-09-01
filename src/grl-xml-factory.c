@@ -841,7 +841,10 @@ fetch_item_data_free (FetchItemData *data)
 inline static ResultData *
 result_data_new (void)
 {
-  return g_slice_new0 (ResultData);
+  ResultData *data = g_slice_new0 (ResultData);
+  data->refcount = 1;
+
+  return data;
 }
 
 static ResultData *
@@ -856,7 +859,9 @@ result_data_unref (ResultData *data)
 {
   data->refcount--;
   if (data->refcount == 0) {
-    fetch_data_free (data->query);
+    if (data->query) {
+      fetch_data_free (data->query);
+    }
     if (data->cache.xml) {
       (data->format == FORMAT_XML)? dataref_unref (data->cache.xml): g_object_unref (data->cache.json);
     }
@@ -2108,10 +2113,10 @@ xml_spec_get_operation_result (GrlXmlFactorySource *source,
                                                      g_free,
                                                      (GDestroyNotify) result_data_unref);
     }
-    g_hash_table_insert (source->priv->results, result_id, result_data);
+    g_hash_table_insert (source->priv->results, result_id, result_data_ref (result_data));
   }
 
-  return result_data_ref (result_data);
+  return result_data;
 }
 
 static Operation *
