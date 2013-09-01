@@ -2537,6 +2537,7 @@ operation_call_send_xml_results (OperationCallData *data)
   gchar *prvalue;
   gchar *xpath;
   gint pending;
+  guint skip;
   int i;
   xmlDocPtr xml_doc;
   xmlXPathContextPtr xml_ctx;
@@ -2691,6 +2692,7 @@ operation_call_send_xml_results (OperationCallData *data)
     operation_call_send_list_run (data);
   } else {
     pending = data->total_results;
+    skip = data->skip;
     GRL_XML_DEBUG (data->source,
                    GRL_XML_DEBUG_PROVIDE,
                    "Sending %d results",
@@ -2699,7 +2701,7 @@ operation_call_send_xml_results (OperationCallData *data)
       media_template = (MediaTemplate *) pt->data;
       media_template_xpath_reffed = (DataRef *) px->data;
       media_template_xpath = (xmlXPathObjectPtr) dataref_value (media_template_xpath_reffed);
-      for (i = data->skip; i < media_template_xpath->nodesetval->nodeNr && pending > 0; i++) {
+      for (i = skip; i < media_template_xpath->nodesetval->nodeNr && pending > 0; i++) {
         keys = merge_lists (data->keys, media_template->mandatory_keys);
         send_item = send_item_new ();
         GRL_XML_DEBUG (data->source,
@@ -2783,7 +2785,7 @@ operation_call_send_xml_results (OperationCallData *data)
         g_list_free (keys);
         pending--;
       }
-      data->skip -= MIN (data->skip, media_template_xpath->nodesetval->nodeNr);
+      skip -= MIN (skip, media_template_xpath->nodesetval->nodeNr);
       pt = g_list_next (pt);
       px = g_list_next (px);
     }
@@ -2823,6 +2825,7 @@ operation_call_send_json_results (OperationCallData *data)
   gchar *prvalue;
   gint pending;
   guint json_array_length;
+  guint skip;
   int i;
 
   if (operation_call_was_cancelled (data)) {
@@ -2983,6 +2986,7 @@ operation_call_send_json_results (OperationCallData *data)
     operation_call_send_list_run (data);
   } else {
     pending = data->total_results;
+    skip = data->skip;
     GRL_XML_DEBUG (data->source,
                    GRL_XML_DEBUG_PROVIDE,
                    "Sending %d results",
@@ -3078,7 +3082,7 @@ operation_call_send_json_results (OperationCallData *data)
         g_list_free (keys);
         pending--;
       }
-      data->skip -= MIN (data->skip, json_array_length);
+      skip -= MIN (skip, json_array_length);
       pt = g_list_next (pt);
       px = g_list_next (px);
     }
