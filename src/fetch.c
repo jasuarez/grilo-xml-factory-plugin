@@ -200,6 +200,7 @@ fetch_regexp_input_obtained (const gchar *input,
   gboolean repeat;
   gchar *expanded_expression;
   gchar *expanded_output;
+  gchar *expanded_references;
 
   if (error || !input) {
     data->common.net_data->callback (NULL, data->common.net_data->user_data, error);
@@ -238,11 +239,15 @@ fetch_regexp_input_obtained (const gchar *input,
   result = g_string_new ("");
   if (repeat) {
     while (g_match_info_matches (match_info)) {
-      g_string_append (result, g_match_info_expand_references (match_info, expanded_output, NULL));
+      expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
+      g_string_append (result, expanded_references);
+      g_free (expanded_references);
       g_match_info_next (match_info, NULL);
     }
   } else if (g_match_info_matches (match_info)) {
-    g_string_append (result, g_match_info_expand_references (match_info, expanded_output, NULL));
+    expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
+    g_string_append (result, expanded_references);
+    g_free (expanded_references);
   }
 
   g_match_info_free (match_info);
