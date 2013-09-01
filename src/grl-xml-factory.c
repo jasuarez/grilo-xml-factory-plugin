@@ -1322,6 +1322,7 @@ xml_spec_get_rest (GrlXmlFactorySource *source,
   gchar *api_token_secret;
   gchar *endpoint;
   xmlChar *xmlCharMethod;
+  xmlChar *xmlCharReferer;
   gchar *method;
   gchar *function_name;
   gchar *param_name;
@@ -1381,6 +1382,15 @@ xml_spec_get_rest (GrlXmlFactorySource *source,
   rest_data->proxy = rest_proxy;
   rest_data->endpoint = endpoint;
   rest_data->method = method;
+
+  /* Check referer attribute */
+  xmlCharReferer = xmlGetProp (xml_node, (const xmlChar *) "referer");
+  if (STR_HAS_VALUE (xmlCharReferer)) {
+    rest_data->referer = expandable_string_new ((const gchar *) xmlCharReferer,
+                                                source->priv->config,
+                                                source->priv->located_strings);
+  }
+  xmlFree (xmlCharReferer);
 
   xml_child_node = xml_get_node (xml_node->children);
   if (xmlStrcmp (xml_child_node->name, (const xmlChar *) "function") == 0) {

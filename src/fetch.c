@@ -372,6 +372,7 @@ fetch_rest (GrlXmlFactorySource *source,
   RestParameter *param;
   RestProxyCall *call;
   gchar *use_function;
+  gchar *use_referer;
   gchar *use_value;
 
   call = rest_proxy_new_call (fetch_data->data.rest->proxy);
@@ -417,6 +418,24 @@ fetch_rest (GrlXmlFactorySource *source,
 
     rest_proxy_call_add_param (call, param->name, use_value);
     expandable_string_free_value (param->value, use_value);
+  }
+
+  /* Expand the referer header */
+  if (fetch_data->data.rest->referer) {
+    use_referer = expandable_string_get_value (fetch_data->data.rest->referer,
+                                               expand_data);
+    if (!use_referer) {
+      GRL_XML_DEBUG_LITERAL (source,
+                             debug_flag,
+                             "Canot invoke RESTful: \"referer\" parameter can not be expanded");
+      send_callback (NULL, user_data, NULL);
+      g_object_unref (call);
+      return;
+    }
+
+    rest_proxy_call_add_header (call, "Referer", use_referer);
+    expandable_string_free_value (fetch_data->data.rest->referer,
+                                  use_referer);
   }
 
   data = net_process_data_new ();
