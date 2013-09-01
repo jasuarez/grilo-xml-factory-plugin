@@ -1503,6 +1503,8 @@ xml_spec_get_replace (GrlXmlFactorySource *source,
   if (xmlStrcmp (xml_node->name, (const xmlChar *) "replacement") == 0) {
     replace_data->replacement = xml_spec_get_expandable_string (source, xml_node);
     xml_node = xml_get_node (xml_node->next);
+  } else {
+    replace_data->replacement = NULL;
   }
 
   /* Get the expression */
