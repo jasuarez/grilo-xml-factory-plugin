@@ -493,6 +493,8 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   MediaTemplate *template;
   gboolean debug;
   gboolean supported_api_version = TRUE;
+  gchar *expanded_source_description;
+  gchar *expanded_source_name;
   gchar *source_description = NULL;
   gchar *source_id = NULL;
   gchar *source_name = NULL;
@@ -614,17 +616,23 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   expandable_source_name = expandable_string_new (source_name,
                                                   merged_config,
                                                   located_strings);
+  expanded_source_name = expandable_string_get_value (expandable_source_name, NULL);
 
   expandable_source_description = expandable_string_new (source_description,
                                                          merged_config,
                                                          located_strings);
+  expanded_source_description = expandable_string_get_value (expandable_source_description, NULL);
+
   GrlXmlFactorySource *source =
     g_object_new (GRL_XML_FACTORY_SOURCE_TYPE,
                   "source-id", source_id,
-                  "source-name", expandable_string_get_value (expandable_source_name, NULL),
-                  "source-desc", expandable_string_get_value (expandable_source_description, NULL),
+                  "source-name", expanded_source_name,
+                  "source-desc", expanded_source_description,
+
                   NULL);
 
+  expandable_string_free_value (expandable_source_name, expanded_source_name);
+  expandable_string_free_value (expandable_source_description, expanded_source_description);
   expandable_string_free (expandable_source_name);
   expandable_string_free (expandable_source_description);
 
@@ -1878,6 +1886,7 @@ xml_spec_get_provide_media_template (GrlXmlFactorySource *source,
                                             source->priv->config,
                                             source->priv->located_strings);
       template->private_keys = g_list_prepend (template->private_keys, prdata);
+      g_free (raw);
       continue;
     }
     grl_key = grl_registry_lookup_metadata_key (registry, key_name);
@@ -2338,6 +2347,7 @@ get_raw_from_path (GrlXmlFactorySource *source,
   JsonNode *json_node;
   gchar *expanded_raw;
   gchar *json_value = NULL;
+  gchar *xpath_strvalue;
   int i;
   xmlDocPtr xml_doc;
   xmlXPathContextPtr xml_ctx;
@@ -2374,13 +2384,17 @@ get_raw_from_path (GrlXmlFactorySource *source,
     if (xpath_value->type == XPATH_NODESET &&
         xpath_value->nodesetval &&
         xpath_value->nodesetval->nodeTab) {
-      return (gchar *) xmlNodeListGetString (xml_doc,
-                                             xpath_value->nodesetval->nodeTab[0]->xmlChildrenNode, 1);
+      xpath_strvalue = (gchar *) xmlNodeListGetString (xml_doc,
+                                                       xpath_value->nodesetval->nodeTab[0]->xmlChildrenNode, 1);
+      xmlXPathFreeObject (xpath_value);
+      return xpath_strvalue;
     }
 
     if (xpath_value->type == XPATH_STRING &&
         STR_HAS_VALUE (xpath_value->stringval)) {
-      return g_strdup ((const gchar *) xpath_value->stringval);
+      xpath_strvalue = g_strdup ((const gchar *) xpath_value->stringval);
+      xmlXPathFreeObject (xpath_value);
+      return xpath_strvalue;
     }
   }
 
