@@ -72,7 +72,7 @@ test_xml_factory_url (void)
                    ==,
                    "One Title");
 
-  g_object_unref (media);
+  g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
 }
 
