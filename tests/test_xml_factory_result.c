@@ -49,6 +49,46 @@ test_xml_factory_result_empty (void)
   g_assert (!(grl_source_supported_operations (source) & GRL_OP_BROWSE));
 }
 
+static void
+test_xml_factory_result_skip (void)
+{
+  GError *error = NULL;
+  GList *medias;
+  GrlMedia *media;
+  GrlOperationOptions *options;
+  GrlRegistry *registry;
+  GrlSource *source;
+
+  registry = grl_registry_get_default ();
+  source = grl_registry_lookup_source (registry, "xml-test-result");
+  g_assert (source);
+  options = grl_operation_options_new (NULL);
+  grl_operation_options_set_skip(options, 2);
+  grl_operation_options_set_count(options, 1);
+
+  medias = grl_source_search_sync (source,
+                                   "test",
+                                   grl_source_supported_keys (source),
+                                   options,
+                                   &error);
+  g_assert_cmpint (g_list_length (medias), ==, 1);
+  g_assert_no_error (error);
+
+  media = (GrlMedia *) medias->data;
+
+  g_assert_cmpstr (grl_media_get_id (media), ==, "number3");
+  g_assert_cmpstr (grl_media_get_title (media), ==, "title3");
+  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+                   ==,
+                   "artist3");
+  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
+                   ==,
+                   "album");
+
+  g_list_free_full (medias, g_object_unref);
+  g_object_unref (options);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -66,6 +106,6 @@ main(int argc, char **argv)
   test_xml_factory_setup ();
 
   g_test_add_func ("/xml-factory/result/empty", test_xml_factory_result_empty);
-
+  g_test_add_func ("/xml-factor/result/skip", test_xml_factory_result_skip);
   return g_test_run ();
 }

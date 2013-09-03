@@ -3,6 +3,30 @@
   <name>XML Test Result</name>
 
   <operation>
+    <search count="%param:count%" skip="%param:skip%">
+      <result>
+        <![CDATA[
+                 <list>
+                 <item>
+                 <id>number1</id>
+                 <artist>artist1</artist>
+                 <title>title1</title>
+                 </item>
+                 <item>
+                 <id>number2</id>
+                 <artist>artist2</artist>
+                 <title>title2</title>
+                 </item>
+                 <item>
+                 <id>number3</id>
+                 <artist>artist3</artist>
+                 <title>title3</title>
+                 </item>
+                 </list>
+        ]]>
+      </result>
+    </search>
+
     <!-- Test empty results -->
     <browse>
       <result/>
@@ -11,9 +35,10 @@
 
   <provide>
     <media type="audio"
-           query="/data">
-      <key name="id">"id"</key>
+           query="/list/item">
+      <key name="id">id</key>
       <key name="artist">artist</key>
+      <key name="album">"album"</key>
       <key name="title">title</key>
     </media>
   </provide>
