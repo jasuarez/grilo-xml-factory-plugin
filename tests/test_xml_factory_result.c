@@ -24,6 +24,8 @@
 
 #define XML_FACTORY_ID "grl-xml-factory"
 
+static GMainLoop *main_loop = NULL;
+
 static void
 test_xml_factory_setup (void)
 {
@@ -33,6 +35,9 @@ test_xml_factory_setup (void)
   registry = grl_registry_get_default ();
   grl_registry_load_all_plugins (registry, &error);
   g_assert_no_error (error);
+
+  main_loop = g_main_loop_new (NULL, FALSE);
+  g_assert (main_loop);
 }
 
 static void
@@ -89,6 +94,64 @@ test_xml_factory_result_skip (void)
   g_object_unref (options);
 }
 
+static void
+search_cb (GrlSource *source,
+           guint operation_id,
+           GrlMedia *media,
+           guint remaining,
+           gpointer user_data,
+           const GError *error)
+{
+  static gboolean is_cancelled = FALSE;
+
+  if (!is_cancelled) {
+    g_assert (media);
+    g_assert_cmpstr (grl_media_get_id (media), ==, "number1");
+    g_assert_cmpstr (grl_media_get_title (media), ==, "title1");
+    g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+                     ==,
+                     "artist1");
+    g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
+                     ==,
+                     "album");
+    g_assert_cmpint (remaining, ==, 2);
+    g_object_unref (media);
+    g_assert_no_error (error);
+    grl_operation_cancel (operation_id);
+    is_cancelled = TRUE;
+  } else {
+    g_assert (!media);
+    g_assert_cmpint (remaining, ==, 0);
+    g_assert_error (error,
+                    GRL_CORE_ERROR,
+                    GRL_CORE_ERROR_OPERATION_CANCELLED);
+    g_main_loop_quit (main_loop);
+  }
+}
+
+static void
+test_xml_factory_result_cancel (void)
+{
+  GrlOperationOptions *options;
+  GrlRegistry *registry;
+  GrlSource *source;
+
+  registry = grl_registry_get_default ();
+  source = grl_registry_lookup_source (registry, "xml-test-result");
+  g_assert (source);
+  options = grl_operation_options_new (NULL);
+
+  grl_source_search (source,
+                     "test",
+                     grl_source_supported_keys (source),
+                     options,
+                     search_cb,
+                     NULL);
+
+  g_main_loop_run (main_loop);
+  g_object_unref (options);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -107,5 +170,7 @@ main(int argc, char **argv)
 
   g_test_add_func ("/xml-factory/result/empty", test_xml_factory_result_empty);
   g_test_add_func ("/xml-factor/result/skip", test_xml_factory_result_skip);
+  g_test_add_func ("/xml-factor/result/cancel", test_xml_factory_result_cancel);
+
   return g_test_run ();
 }
