@@ -3615,11 +3615,11 @@ static void
 grl_xml_factory_source_cancel (GrlSource *source,
                                guint operation_id)
 {
-  OperationCallData *data;
+  GCancellable *cancellable;
 
-  data = (OperationCallData *) grl_operation_get_data (operation_id);
+  cancellable = (GCancellable *) grl_operation_get_data (operation_id);
 
-  if (data) {
-    g_cancellable_cancel (data->cancellable);
+  if (cancellable) {
+    g_cancellable_cancel (cancellable);
   }
 }
