@@ -237,17 +237,21 @@ fetch_regexp_input_obtained (const gchar *input,
   g_regex_match_full (regex, input, -1, 0, 0, &match_info, NULL);
 
   result = g_string_new ("");
-  if (repeat) {
-    while (g_match_info_matches (match_info)) {
+  if (g_regex_check_replacement (expanded_output, NULL, NULL)) {
+    if (repeat) {
+      while (g_match_info_matches (match_info)) {
+        expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
+        g_string_append (result, expanded_references);
+        g_free (expanded_references);
+        g_match_info_next (match_info, NULL);
+      }
+    } else if (g_match_info_matches (match_info)) {
       expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
       g_string_append (result, expanded_references);
       g_free (expanded_references);
-      g_match_info_next (match_info, NULL);
     }
-  } else if (g_match_info_matches (match_info)) {
-    expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
-    g_string_append (result, expanded_references);
-    g_free (expanded_references);
+  } else {
+    g_string_append (result, expanded_output);
   }
 
   g_match_info_free (match_info);
