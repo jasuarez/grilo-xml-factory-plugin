@@ -197,34 +197,15 @@ fetch_regexp_input_obtained (const gchar *input,
   GMatchInfo *match_info;
   GRegex *regex;
   GString *result;
+  gboolean has_references;
+  gboolean is_valid;
   gboolean repeat;
   gchar *expanded_expression;
   gchar *expanded_output;
   gchar *expanded_references;
 
-  if (error || !input) {
-    data->common.net_data->callback (NULL, data->common.net_data->user_data, error);
-    regexp_process_data_free (data);
-    return;
-  }
-
-  //if (data->data.regexp->expression->expression) {
-  if (data->data->data.regexp->expression->expression) {
-    expanded_expression = expandable_string_get_value (data->data->data.regexp->expression->expression,
-                                                       data->common.net_data->expand_data);
-
-    if ((regex = g_regex_new (expanded_expression, 0, 0, NULL)) == NULL) {
-      data->common.net_data->callback (NULL, data->common.net_data->user_data, NULL);
-      expandable_string_free_value (data->data->data.regexp->expression->expression, expanded_expression);
-      regexp_process_data_free (data);
-      return;
-    }
-    expandable_string_free_value (data->data->data.regexp->expression->expression, expanded_expression);
-    repeat = data->data->data.regexp->expression->repeat;
-  } else {
-    expanded_expression = "(?ms)(.*)";
-    regex = g_regex_new (expanded_expression, 0, 0, NULL);
-    repeat = FALSE;
+  if (!input) {
+    input = "";
   }
 
   if (data->data->data.regexp->output) {
@@ -234,10 +215,31 @@ fetch_regexp_input_obtained (const gchar *input,
     expanded_output = "\\1";
   }
 
-  g_regex_match_full (regex, input, -1, 0, 0, &match_info, NULL);
-
   result = g_string_new ("");
-  if (g_regex_check_replacement (expanded_output, NULL, NULL)) {
+  is_valid = g_regex_check_replacement (expanded_output, &has_references, NULL);
+  if (!is_valid || !has_references) {
+    g_string_append (result, expanded_output);
+  } else {
+    if (data->data->data.regexp->expression->expression) {
+      expanded_expression = expandable_string_get_value (data->data->data.regexp->expression->expression,
+                                                         data->common.net_data->expand_data);
+
+      if ((regex = g_regex_new (expanded_expression, 0, 0, NULL)) == NULL) {
+        data->common.net_data->callback (NULL, data->common.net_data->user_data, NULL);
+        expandable_string_free_value (data->data->data.regexp->expression->expression, expanded_expression);
+        regexp_process_data_free (data);
+        return;
+      }
+      expandable_string_free_value (data->data->data.regexp->expression->expression, expanded_expression);
+      repeat = data->data->data.regexp->expression->repeat;
+    } else {
+      expanded_expression = "(?ms)(.*)";
+      regex = g_regex_new (expanded_expression, 0, 0, NULL);
+      repeat = FALSE;
+    }
+
+    g_regex_match_full (regex, input, -1, 0, 0, &match_info, NULL);
+
     if (repeat) {
       while (g_match_info_matches (match_info)) {
         expanded_references = g_match_info_expand_references (match_info, expanded_output, NULL);
@@ -250,12 +252,10 @@ fetch_regexp_input_obtained (const gchar *input,
       g_string_append (result, expanded_references);
       g_free (expanded_references);
     }
-  } else {
-    g_string_append (result, expanded_output);
-  }
 
-  g_match_info_free (match_info);
-  g_regex_unref (regex);
+    g_match_info_free (match_info);
+    g_regex_unref (regex);
+  }
 
   if (data->data->data.regexp->output) {
     expandable_string_free_value (data->data->data.regexp->output, expanded_output);
@@ -567,7 +567,7 @@ reg_exp_input_free (RegExpInput *input)
 {
   if (input->use_ref) {
     g_free (input->data.buffer_id);
-  } else {
+  } else if (input->data.input) {
     fetch_data_free (input->data.input);
   }
 
@@ -721,11 +721,17 @@ fetch_data_get (GrlXmlFactorySource *source,
   ReplaceProcessData *replace_data;
   gchar *use_raw;
 
+  if (!fetch_data) {
+    send_callback (NULL, user_data, NULL);
+    return;
+  }
+
   if (fetch_data->type == FETCH_RAW) {
     use_raw = get_raw_callback (source, fetch_data->data.raw, get_raw_data);
     GRL_XML_DEBUG (source, debug_flag, "Use '%s'", use_raw);
     send_callback (use_raw, user_data, NULL);
     expandable_string_free_value (fetch_data->data.raw, use_raw);
+    return;
   }
 
   if (fetch_data->type == FETCH_URL) {
@@ -748,6 +754,7 @@ fetch_data_get (GrlXmlFactorySource *source,
                     get_raw_data,
                     (DataFetchedCb) fetch_data_url_obtained,
                     net_data);
+    return;
   }
 
   if (fetch_data->type == FETCH_REST) {
@@ -760,6 +767,7 @@ fetch_data_get (GrlXmlFactorySource *source,
                 get_raw_data,
                 send_callback,
                 user_data);
+    return;
   }
 
   if (fetch_data->type == FETCH_REPLACE) {
@@ -785,6 +793,7 @@ fetch_data_get (GrlXmlFactorySource *source,
                     get_raw_data,
                     (DataFetchedCb) fetch_replace_input_obtained,
                     replace_data);
+    return;
   }
 
   if (fetch_data->type == FETCH_REGEXP) {

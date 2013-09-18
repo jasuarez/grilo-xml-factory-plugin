@@ -1423,7 +1423,6 @@ static RegExpData *
 xml_spec_get_regexp (GrlXmlFactorySource *source,
                      xmlNodePtr xml_node)
 {
-  FetchData *input_data;
   FetchData *subregexp;
   RegExpData *regexp;
   gchar *buffer_id;
@@ -1437,7 +1436,8 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
   while (xmlStrcmp (xml_node->name, (const xmlChar *) "regexp") == 0) {
     subregexp = xml_spec_get_fetch_data (source, xml_node);
     if (!subregexp) {
-      goto free_resources;
+      reg_exp_data_free (regexp);
+      return NULL;
     }
     /* Tip: if the underlaying sub-regexp' output does not have an id, then it
        is totally irrelevant, as it can't be referenced by any other subregexp
@@ -1457,13 +1457,9 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
     regexp->input->data.buffer_id = buffer_ref;
   } else {
     g_free (buffer_ref);
-    input_data =
-      xml_spec_get_fetch_data (source, xml_get_node (xml_node->children));
-    if (!input_data) {
-      goto free_resources;
-    }
     regexp->input->use_ref = FALSE;
-    regexp->input->data.input = input_data;
+    regexp->input->data.input =
+      xml_spec_get_fetch_data (source, xml_get_node (xml_node->children));
   }
 
   /* Get the output */
@@ -1484,10 +1480,6 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
   regexp->expression->repeat = xml_get_property_boolean (xml_node, (const xmlChar *) "repeat");
 
   return regexp;
-
- free_resources:
-  reg_exp_data_free (regexp);
-  return NULL;
 }
 
 static ReplaceData *
