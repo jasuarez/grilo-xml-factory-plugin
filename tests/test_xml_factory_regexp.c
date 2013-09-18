@@ -141,6 +141,39 @@ test_xml_factory_regexp_no_output (void)
 }
 
 static void
+test_xml_factory_regexp_no_input (void)
+{
+  GError *error = NULL;
+  GList *medias;
+  GrlMedia *media;
+  GrlOperationOptions *options;
+  GrlRegistry *registry;
+  GrlSource *source;
+
+  registry = grl_registry_get_default ();
+  source = grl_registry_lookup_source (registry, "xml-test-regexp-no-input");
+  g_assert (source);
+  options = grl_operation_options_new (NULL);
+  g_assert (options);
+
+  medias = grl_source_browse_sync (source,
+                                   NULL,
+                                   grl_source_supported_keys (source),
+                                   options,
+                                   &error);
+  g_assert_cmpint (g_list_length(medias), ==, 1);
+  g_assert_no_error (error);
+
+  media = (GrlMedia *) medias->data;
+  g_assert_cmpstr (grl_media_get_id (media), ==, "My Id");
+  g_assert (!grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)));
+  g_assert_cmpstr(grl_media_get_title (media), ==, "This is a fixed title");
+
+  g_list_free_full (medias, g_object_unref);
+  g_object_unref (options);
+}
+
+static void
 test_xml_factory_regexp_repeat_expression (void)
 {
   GError *error = NULL;
@@ -194,6 +227,7 @@ main(int argc, char **argv)
   g_test_add_func ("/xml-factory/regexp/full", test_xml_factory_regexp_full);
   g_test_add_func ("/xml-factory/regexp/no-expression", test_xml_factory_regexp_no_expression);
   g_test_add_func ("/xml-factory/regexp/no-output", test_xml_factory_regexp_no_output);
+  g_test_add_func ("/xml-factory/regexp/no-input", test_xml_factory_regexp_no_input);
   g_test_add_func ("/xml-factory/regexp/repeat-expression", test_xml_factory_regexp_repeat_expression);
 
   return g_test_run ();

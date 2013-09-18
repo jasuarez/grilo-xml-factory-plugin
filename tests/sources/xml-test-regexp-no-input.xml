@@ -1,0 +1,38 @@
+<source api="1">
+  <id>xml-test-regexp-no-input</id>
+  <name>XML Test RegExp No Input</name>
+
+  <operation>
+    <browse>
+      <result format="json">
+        { "data": {
+             "id": "My Id",
+             "title": "My Testing Title"
+             }
+        }
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="$.data"
+           format="json">
+      <key name="id">$.id</key>
+      <!-- <key name="artist"> -->
+      <!--   <regexp> -->
+      <!--     <input>$.artist</input> -->
+      <!--     <output>This is \1 value</output> -->
+      <!--     <expression>^My (.+)</expression> -->
+      <!--   </regexp> -->
+      <!-- </key> -->
+      <key name="title">
+        <regexp>
+          <input/>
+          <output>This is a fixed title</output>
+          <expression>^My (.+)</expression>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+</source>

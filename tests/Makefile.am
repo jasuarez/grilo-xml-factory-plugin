@@ -96,6 +96,7 @@ dist_noinst_DATA =                                 \
 	sources/xml-test-private-keys.xml               \
    sources/xml-test-regexp-full.xml                \
    sources/xml-test-regexp-no-expression.xml       \
+   sources/xml-test-regexp-no-input.xml            \
    sources/xml-test-regexp-no-output.xml           \
    sources/xml-test-regexp-repeat-expression.xml   \
    sources/xml-test-strings.xml
