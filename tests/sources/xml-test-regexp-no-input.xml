@@ -19,13 +19,13 @@
            query="$.data"
            format="json">
       <key name="id">$.id</key>
-      <!-- <key name="artist"> -->
-      <!--   <regexp> -->
-      <!--     <input>$.artist</input> -->
-      <!--     <output>This is \1 value</output> -->
-      <!--     <expression>^My (.+)</expression> -->
-      <!--   </regexp> -->
-      <!-- </key> -->
+      <key name="artist">
+        <regexp>
+          <input>$.artist</input>
+          <output>This is \1 value</output>
+          <expression>^My (.+)</expression>
+        </regexp>
+      </key>
       <key name="title">
         <regexp>
           <input/>
