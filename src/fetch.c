@@ -197,9 +197,11 @@ fetch_regexp_input_obtained (const gchar *input,
   GMatchInfo *match_info;
   GRegex *regex;
   GString *result;
+  gboolean free_input = FALSE;
   gboolean has_references;
   gboolean is_valid;
   gboolean repeat;
+  gchar *decoded_input;
   gchar *expanded_expression;
   gchar *expanded_output;
   gchar *expanded_references;
@@ -238,7 +240,14 @@ fetch_regexp_input_obtained (const gchar *input,
       repeat = FALSE;
     }
 
-    g_regex_match_full (regex, input, -1, 0, 0, &match_info, NULL);
+    if (data->data->data.regexp->input->decode) {
+      decoded_input = expand_html_entities (input);
+      free_input = TRUE;
+    } else {
+      decoded_input = (gchar *) input;
+    }
+
+    g_regex_match_full (regex, decoded_input, -1, 0, 0, &match_info, NULL);
 
     if (repeat) {
       while (g_match_info_matches (match_info)) {
@@ -269,6 +278,10 @@ fetch_regexp_input_obtained (const gchar *input,
 
   g_string_free (result, TRUE);
   regexp_process_data_free (data);
+
+  if (free_input) {
+    g_free (decoded_input);
+  }
 }
 
 static void

@@ -61,7 +61,8 @@
         <xs:complexType>
           <xs:complexContent>
             <xs:extension base="fetchType">
-              <xs:attribute name="ref" type="xs:string"/>
+              <xs:attribute name="decode" type="xs:boolean" default="false"/>
+              <xs:attribute name="ref"    type="xs:string"/>
             </xs:extension>
           </xs:complexContent>
         </xs:complexType>

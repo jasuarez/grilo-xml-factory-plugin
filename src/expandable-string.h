@@ -58,4 +58,6 @@ gchar *expandable_string_get_value (ExpandableString *exp_str,
 void expandable_string_free_value (ExpandableString *exp_str,
                                    gchar *value);
 
+gchar *expand_html_entities (const gchar *str);
+
 #endif /* _EXPANDABLE_STRING_H_ */

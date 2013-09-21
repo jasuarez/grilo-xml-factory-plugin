@@ -1451,6 +1451,7 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
   }
 
   /* Get the input */
+  regexp->input->decode = xml_get_property_boolean (xml_node, (const xmlChar *) "decode");
   buffer_ref = (gchar *) xmlGetProp (xml_node, (const xmlChar *) "ref");
   if (STR_HAS_VALUE (buffer_ref)) {
     regexp->input->use_ref = TRUE;
@@ -1464,7 +1465,8 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
 
   /* Get the output */
   xml_node = xml_get_node (xml_node->next);
-  if (xmlStrcmp (xml_node->name, (const xmlChar *) "output") == 0) {
+  if (xml_node &&
+      xmlStrcmp (xml_node->name, (const xmlChar *) "output") == 0) {
     regexp->output = xml_spec_get_expandable_string (source, xml_node);
     buffer_id = (gchar *) xmlGetProp (xml_node, (const xmlChar *) "id");
     if (STR_HAS_VALUE (buffer_id)) {
@@ -1476,8 +1478,10 @@ xml_spec_get_regexp (GrlXmlFactorySource *source,
   }
 
   /* Get the expression */
-  regexp->expression->expression = xml_spec_get_expandable_string (source, xml_node);
-  regexp->expression->repeat = xml_get_property_boolean (xml_node, (const xmlChar *) "repeat");
+  if (xml_node) {
+    regexp->expression->expression = xml_spec_get_expandable_string (source, xml_node);
+    regexp->expression->repeat = xml_get_property_boolean (xml_node, (const xmlChar *) "repeat");
+  }
 
   return regexp;
 }

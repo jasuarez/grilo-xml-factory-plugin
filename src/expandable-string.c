@@ -23,6 +23,8 @@
 #include "expandable-string.h"
 
 #include "json-ghashtable.h"
+
+#include <libxml/HTMLparser.h>
 #include <string.h>
 
 typedef enum {
@@ -48,22 +50,27 @@ struct _ExpandData {
 };
 
 static GRegex *
-expand_pattern(gboolean deinit)
+expand_pattern_factory (void)
 {
   static GRegex *pattern = NULL;
 
-  if (deinit) {
-    if (pattern) {
-      g_regex_unref (pattern);
-      pattern = NULL;
-    }
-    return pattern;
-  } else {
-    if (!pattern) {
-      pattern = g_regex_new ("%.*%", G_REGEX_OPTIMIZE | G_REGEX_UNGREEDY, 0, NULL);
-    }
-    return pattern;
+  if (!pattern) {
+    pattern = g_regex_new ("%.*%", G_REGEX_OPTIMIZE | G_REGEX_UNGREEDY, 0, NULL);
   }
+
+  return pattern;
+}
+
+static GRegex *
+expand_pattern_entity (void)
+{
+  static GRegex *pattern = NULL;
+
+  if (!pattern) {
+    pattern = g_regex_new ("&.+;", G_REGEX_OPTIMIZE | G_REGEX_UNGREEDY, 0, NULL);
+  }
+
+  return pattern;
 }
 
 inline static gchar *
@@ -480,8 +487,40 @@ expand_buffer_id_cb (const GMatchInfo *match_info,
   return TRUE;
 }
 
+static gboolean
+expand_html_entity_cb (const GMatchInfo *match_info,
+                       GString *result,
+                       gpointer data)
+{
+  const htmlEntityDesc *entity;
+  gchar *match;
+  gint match_len;
+
+  match = g_match_info_fetch (match_info, 0);
+  /* Remove the leading '&' and trailing ';' characteres */
+  match_len = strlen (match);
+  match[match_len - 1] = '\0';
+  match++;
+
+  entity = htmlEntityLookup ((const xmlChar *) match);
+  if (entity) {
+    g_string_insert_unichar (result, -1, entity->value);
+    match--;
+  } else {
+    /* Restore characteres and put as it is */
+    match--;
+    match[match_len - 1] = ';';
+    g_string_append (result, match);
+  }
+
+  g_free (match);
+
+  return TRUE;
+}
+
 static gchar *
 expand_full (const gchar *string,
+             GRegex *pattern,
              GRegexEvalCallback eval,
              gpointer user_data,
              ...)
@@ -498,7 +537,7 @@ expand_full (const gchar *string,
 
   string_length = strlen (string);
   result = g_string_sized_new (string_length);
-  g_regex_match_full (expand_pattern (FALSE), string, string_length, 0, 0, &match_info, NULL);
+  g_regex_match_full (pattern, string, string_length, 0, 0, &match_info, NULL);
   while (g_match_info_matches (match_info)) {
     g_match_info_fetch_pos (match_info, 0, &start_pos, &end_pos);
     g_string_append_len (result, string + str_pos, start_pos - str_pos);
@@ -539,6 +578,7 @@ expand_string (const gchar *str,
   gchar *expanded_str;
 
   expanded_str = expand_full (str,
+                              expand_pattern_factory(),
                               (GRegexEvalCallback) expand_metadata_key_cb,
                               expand_data,
                               (GRegexEvalCallback) expand_param_cb,
@@ -556,6 +596,16 @@ expand_string (const gchar *str,
   }
 
   return expanded_str;
+}
+
+gchar *
+expand_html_entities (const gchar *str)
+{
+  return expand_full (str,
+                      expand_pattern_entity (),
+                      (GRegexEvalCallback) expand_html_entity_cb,
+                      NULL,
+                      NULL);
 }
 
 ExpandData *
@@ -668,6 +718,7 @@ expandable_string_new (const gchar *init,
 
   if (init) {
     exp_str->str = expand_full (init,
+                                expand_pattern_factory (),
                                 (GRegexEvalCallback) expand_config_cb,
                                 config,
                                 (GRegexEvalCallback) expand_str_cb,
