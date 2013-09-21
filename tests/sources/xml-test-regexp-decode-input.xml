@@ -1,0 +1,34 @@
+<source api="1">
+  <id>xml-test-regexp-decode-input</id>
+  <name>XML Test RegExp Decode Input</name>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+             <data>
+             <id>My Id</id>
+             <artist>My Artist</artist>
+             </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">id</key>
+      <key name="title">
+        <regexp>
+          <input decode="true"><![CDATA["Hello &invalid; &amp; &lt;world&gt;!"]]></input>
+        </regexp>
+      </key>
+      <key name="artist">
+        <regexp>
+          <input decode="true">artist</input>
+        </regexp>
+      </key>
+    </media>
+  </provide>
+</source>
