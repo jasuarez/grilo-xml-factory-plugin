@@ -3025,7 +3025,7 @@ operation_call_send_json_results (OperationCallData *data)
       media_template = (MediaTemplate *) pt->data;
       json_array = (JsonArray *) px->data;
       json_array_length = json_array_get_length (json_array);
-      for (i = data->skip; i < json_array_length && pending > 0; i++) {
+      for (i = skip; i < json_array_length && pending > 0; i++) {
         keys = merge_lists (data->keys, media_template->mandatory_keys);
         send_item = send_item_new ();
         GRL_XML_DEBUG (data->source,
