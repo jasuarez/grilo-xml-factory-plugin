@@ -3210,6 +3210,9 @@ operation_call (OperationCallData *data)
                                              data->expand_data,
                                              data->operation_type == OP_RESOLVE? 1: G_MAXUINT);
 
+  /* Avoid trying to send more elements than requested */
+  data->count = MIN (data->count, grl_operation_options_get_count (data->options));
+
   if (data->operation->result->cache.xml &&
       data->operation->result->cache_valid) {
     GRL_XML_DEBUG_LITERAL (data->source,
