@@ -19,7 +19,12 @@
     <media type="audio"
            query="/data">
       <key name="id">"id"</key>
-      <key name="artist">artist</key>
+      <key name="artist">
+        <replace dump="@abs_top_builddir@/tests/xml-test-log.dump">
+          <input>artist</input>
+          <expression>"My "</expression>
+        </replace>
+      </key>
     </media>
   </provide>
 </source>

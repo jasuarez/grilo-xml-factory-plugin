@@ -144,6 +144,7 @@ AC_CONFIG_FILES([
   src/Makefile
   src/sources/Makefile
   tests/Makefile
+  tests/sources/xml-test-log.xml
 ])
 
 AC_OUTPUT

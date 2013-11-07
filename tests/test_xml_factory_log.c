@@ -21,6 +21,7 @@
  */
 
 #include <grilo.h>
+#include <glib/gstdio.h>
 
 #define XML_FACTORY_ID "grl-xml-factory"
 
@@ -109,6 +110,12 @@ test_xml_factory_log (void)
                                    &error);
 
   g_test_assert_expected_messages ();
+
+  /* Verify we have a dump file */
+  g_assert (g_file_test (XML_FACTORY_LOG_DUMP_FILE,
+                         G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR));
+  g_remove (XML_FACTORY_LOG_DUMP_FILE);
+
 
   g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
