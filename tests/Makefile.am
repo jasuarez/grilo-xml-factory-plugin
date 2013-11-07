@@ -15,6 +15,7 @@ TEST_PROGS +=                 \
    test_xml_factory_url       \
    test_xml_factory_regexp    \
    test_xml_factory_strings   \
+   test_xml_factory_log       \
    test_xml_factory_private_keys
 
 #check_PROGRAMS = $(TESTS)
@@ -76,6 +77,15 @@ test_xml_factory_strings_LDADD =	\
 test_xml_factory_strings_CFLAGS =	\
 	$(test_xml_factory_defines)
 
+test_xml_factory_log_SOURCES =	\
+	test_xml_factory_log.c
+
+test_xml_factory_log_LDADD =	\
+	@DEPS_LIBS@
+
+test_xml_factory_log_CFLAGS =	\
+	$(test_xml_factory_defines)
+
 test_xml_factory_private_keys_SOURCES =	\
 	test_xml_factory_private_keys.c
 
@@ -100,7 +110,8 @@ dist_noinst_DATA =                                 \
    sources/xml-test-regexp-no-input.xml            \
    sources/xml-test-regexp-no-output.xml           \
    sources/xml-test-regexp-repeat-expression.xml   \
-   sources/xml-test-strings.xml
+   sources/xml-test-strings.xml                    \
+   sources/xml-test-log.xml
 
 noinst_PROGRAMS = $(TEST_PROGS)
 

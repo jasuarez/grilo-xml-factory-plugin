@@ -1,0 +1,25 @@
+<source api="1">
+  <id>xml-test-log</id>
+  <name>XML Test Log</name>
+
+  <operation debug="true">
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <artist>My Artist</artist>
+                 <title>My Title</title>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide debug="1">
+    <media type="audio"
+           query="/data">
+      <key name="id">"id"</key>
+      <key name="artist">artist</key>
+    </media>
+  </provide>
+</source>
