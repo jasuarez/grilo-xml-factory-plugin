@@ -48,9 +48,9 @@
            format="json"
            query="$['feeds'][0]['feeds'][*]"
            select="$['feeds'][0]['feeds'][?(@['feed_url']=='%key:id%')]">
-      <key name="id">['feed_url']</key>
-      <key name="title">['title']</key>
-      <priv name="feed_url">['feed_url']</priv>
+      <key name="id">$['feed_url']</key>
+      <key name="title">$['title']</key>
+      <priv name="feed_url">$['feed_url']</priv>
     </media>
 
     <media xmlns:a="http://www.w3.org/2005/Atom"

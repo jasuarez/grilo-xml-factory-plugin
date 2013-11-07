@@ -23,15 +23,15 @@
            type="audio"
            format="json"
            query="$[*]">
-      <key name="id">['id']</key>
-      <key name="title">['name']</key>
+      <key name="id">$['id']</key>
+      <key name="title">$['name']</key>
       <key name="thumbnail">
         <regexp>
           <regexp>
-            <input>['pictureBaseURL']</input>
+            <input>$['pictureBaseURL']</input>
             <output id="base"/>
           </regexp>
-          <input>['picture1Name']</input>
+          <input>$['picture1Name']</input>
           <output>%buf:base%\1</output>
         </regexp>
       </key>
@@ -42,16 +42,16 @@
            type="audio"
            format="json"
            select="$">
-      <key name="id" force="true">['id']</key>
-      <key name="title">['name']</key>
-      <key name="url">['streamURL']</key>
+      <key name="id" force="true">$['id']</key>
+      <key name="title">$['name']</key>
+      <key name="url">$['streamURL']</key>
       <key name="thumbnail">
         <regexp>
           <regexp>
-            <input>['pictureBaseURL']</input>
+            <input>$['pictureBaseURL']</input>
             <output id="base"/>
           </regexp>
-          <input>['picture1Name']</input>
+          <input>$['picture1Name']</input>
           <output>%buf:base%\1</output>
         </regexp>
       </key>

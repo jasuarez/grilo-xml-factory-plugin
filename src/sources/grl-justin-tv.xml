@@ -68,10 +68,12 @@
     </media>
 
     <!-- This is for the case we want JSON data; remind JSON results are converted to XML -->
-    <media type="box" query="/json/*">
-      <key name="id">name()</key>
-      <key name="title">name</key>
-      <key name="thumbnail">icon</key>
+    <media type="box"
+           query="$.*"
+           format="json">
+      <key name="id">$[(@.name)]</key>
+      <key name="title">$['name']</key>
+      <key name="thumbnail">$['icon']</key>
     </media>
   </provide>
 

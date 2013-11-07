@@ -15,12 +15,12 @@
     <media format="json"
            type="image"
            query="$['responseData']['results'][*]">
-      <key name="id">['imageId']</key>
-      <key name="title">['titleNoFormatting']</key>
-      <key name="width">['width']</key>
-      <key name="height">['height']</key>
-      <key name="thumbnail">['tbUrl']</key>
-      <key name="url">['unescapedUrl']</key>
+      <key name="id">$['imageId']</key>
+      <key name="title">$['titleNoFormatting']</key>
+      <key name="width">$['width']</key>
+      <key name="height">$['height']</key>
+      <key name="thumbnail">$['tbUrl']</key>
+      <key name="url">$['unescapedUrl']</key>
     </media>
   </provide>
 
