@@ -106,13 +106,13 @@ grl_xml_dump (LogDumpData *data,
               gsize length)
 {
   GDateTime *current_date;
-  const gchar *suffix = "}}}END\n";
+  const gchar *suffix = "]]]END\n";
   gchar *prefix;
   gchar *timestamp;
 
   current_date = g_date_time_new_now_local ();
   timestamp = g_date_time_format (current_date, "%c");
-  prefix = g_strdup_printf ("%s %s[%d]: BEGIN{{{",
+  prefix = g_strdup_printf ("%s %s[%d]: BEGIN[[[",
                             timestamp,
                             data->source_id,
                             data->line);
