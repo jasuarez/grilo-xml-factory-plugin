@@ -185,6 +185,7 @@ expand_metadata_key_cb (const GMatchInfo *match_info,
                         GString *result,
                         ExpandData *expand_data)
 {
+  GType key_type;
   GrlKeyID key;
   GrlRegistry *registry;
   const gchar *key_name = NULL;
@@ -231,16 +232,17 @@ expand_metadata_key_cb (const GMatchInfo *match_info,
   }
 
   /* Convert type to string */
-  switch (grl_metadata_key_get_type (key)) {
-  case G_TYPE_STRING:
+  key_type = grl_metadata_key_get_type (key);
+
+  if (key_type == G_TYPE_STRING) {
     key_value = g_strdup (grl_data_get_string (GRL_DATA (expand_data->media), key));
-    break;
-  case G_TYPE_INT:
+  } else if (key_type == G_TYPE_INT) {
     key_value = g_strdup_printf ("%d", grl_data_get_int (GRL_DATA (expand_data->media), key));
-    break;
-  case G_TYPE_FLOAT:
+  } else if (key_type == G_TYPE_FLOAT) {
     key_value = g_strdup_printf ("%f", grl_data_get_float (GRL_DATA (expand_data->media), key));
-    break;
+  } else if (key_type == G_TYPE_DATE_TIME) {
+    key_value = g_date_time_format (grl_data_get_boxed (GRL_DATA (expand_data->media), key),
+                                    "%FT%T");
   }
 
   g_string_append (result, key_value);

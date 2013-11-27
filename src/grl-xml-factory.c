@@ -782,29 +782,33 @@ insert_value (GrlXmlFactorySource *source,
               GrlKeyID key,
               const gchar *value)
 {
+  GDateTime *datetime;
+  GType key_type;
+
   GRL_XML_DEBUG (source,
                  GRL_XML_DEBUG_PROVIDE,
                  "Adding \"%s\" key: \"%s\"",
                  grl_metadata_key_get_name (key),
                  value);
 
-  switch (grl_metadata_key_get_type (key)) {
-  case G_TYPE_STRING:
+  key_type = grl_metadata_key_get_type (key);
+  if (key_type == G_TYPE_STRING) {
     grl_data_set_string (GRL_DATA (media),
                          key,
                          (const gchar *) value);
-    break;
-  case G_TYPE_INT:
+  } else if (key_type == G_TYPE_INT) {
     grl_data_set_int (GRL_DATA (media),
                       key,
                       (gint) g_ascii_strtoll ((const gchar *) value, NULL, 10));
-    break;
-  case G_TYPE_FLOAT:
+  } else if (key_type == G_TYPE_FLOAT) {
     grl_data_set_float (GRL_DATA (media),
                         key,
                         (gfloat) g_ascii_strtod ((const gchar *) value, NULL));
-    break;
-  }
+  } else if (key_type == G_TYPE_DATE_TIME) {
+    datetime = grl_date_time_from_iso8601 (value);
+    grl_data_set_boxed (GRL_DATA (media), key, datetime);
+    g_date_time_unref (datetime);
+   }
 }
 
 inline static OperationRequirement *
@@ -1281,12 +1285,14 @@ xml_get_property_boolean (xmlNodePtr xml_node,
 static gboolean
 xml_spec_key_is_supported (GrlKeyID key)
 {
-  switch (grl_metadata_key_get_type (key)) {
-  case G_TYPE_STRING:
-  case G_TYPE_INT:
-  case G_TYPE_FLOAT:
+  GType key_type = grl_metadata_key_get_type (key);
+
+  if (key_type == G_TYPE_STRING ||
+      key_type == G_TYPE_INT ||
+      key_type == G_TYPE_FLOAT ||
+      key_type == G_TYPE_DATE_TIME) {
     return TRUE;
-  default:
+  } else {
     return FALSE;
   }
 }
