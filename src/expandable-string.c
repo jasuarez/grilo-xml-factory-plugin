@@ -172,7 +172,7 @@ expand_remaining_cb (const GMatchInfo *match_info,
   /* Special case: '%%' is expanded by single '%' */
   if (strlen (match) == 2) {
     g_string_append (result, "%");
-    g_free (--match);
+    g_free (match);
     return TRUE;
   }
   g_free (match);
