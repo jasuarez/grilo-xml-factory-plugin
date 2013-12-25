@@ -3,10 +3,10 @@
   <name>XML Test Expandable String</name>
 
   <operation>
-    <!-- Test expandable parameters -->
-    <search>
+    <search skip="%param:skip%" count="%param:count%" >
       <result>
         <![CDATA[
+                 <list>
                  <item>
                  <id>1</id>
                  <artist>artist-%param:search_text%</artist>
@@ -17,6 +17,11 @@
                  <width>%param:page_offset%</width>
                  <url>%param:invalid_parameter%</url>
                  </item>
+                 <item>
+                 <id>2</id>
+                 <title>This is 100%% correct</title>
+                 </item>
+                 </list>
         ]]>
       </result>
     </search>
@@ -24,7 +29,7 @@
 
   <provide>
     <media type="audio"
-           query="/item">
+           query="/list/item">
       <key name="id">id</key>
       <key name="artist">artist</key>
       <key name="album">album</key>
