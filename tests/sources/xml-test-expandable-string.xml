@@ -1,0 +1,38 @@
+<source api="1" autosplit="10">
+  <id>xml-test-expandable-string</id>
+  <name>XML Test Expandable String</name>
+
+  <operation>
+    <!-- Test expandable parameters -->
+    <search>
+      <result>
+        <![CDATA[
+                 <item>
+                 <id>1</id>
+                 <artist>artist-%param:search_text%</artist>
+                 <album>album-%param:count%</album>
+                 <title>title-%param:skip%</title>
+                 <duration>%param:page_number%</duration>
+                 <bitrate>%param:page_size%</bitrate>
+                 <width>%param:page_offset%</width>
+                 <url>%param:invalid_parameter%</url>
+                 </item>
+        ]]>
+      </result>
+    </search>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/item">
+      <key name="id">id</key>
+      <key name="artist">artist</key>
+      <key name="album">album</key>
+      <key name="title">title</key>
+      <key name="duration">duration</key>
+      <key name="bitrate">bitrate</key>
+      <key name="width">width</key>
+      <key name="url">url</key>
+    </media>
+  </provide>
+</source>

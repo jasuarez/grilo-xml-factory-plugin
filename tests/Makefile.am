@@ -9,14 +9,15 @@ include $(top_srcdir)/gtester.mk
 
 INCLUDES = @DEPS_CFLAGS@
 
-TEST_PROGS +=                 \
-   test_xml_factory_result    \
-   test_xml_factory_replace   \
-   test_xml_factory_url       \
-   test_xml_factory_regexp    \
-   test_xml_factory_strings   \
-   test_xml_factory_log       \
-   test_xml_factory_private_keys
+TEST_PROGS +=                    \
+   test_xml_factory_result       \
+   test_xml_factory_replace      \
+   test_xml_factory_url          \
+   test_xml_factory_regexp       \
+   test_xml_factory_strings      \
+   test_xml_factory_log          \
+   test_xml_factory_private_keys \
+   test_xml_factory_expandable_string
 
 #check_PROGRAMS = $(TESTS)
 
@@ -97,6 +98,12 @@ test_xml_factory_private_keys_LDADD =	\
 test_xml_factory_private_keys_CFLAGS =	\
 	$(test_xml_factory_defines)
 
+test_xml_factory_expandable_string_LDADD =	\
+	@DEPS_LIBS@
+
+test_xml_factory_expandable_string_CFLAGS =	\
+	$(test_xml_factory_defines)
+
 # Distribute the tests data:
 dist_noinst_DATA =                                 \
    data/network-data.ini                           \
@@ -113,7 +120,8 @@ dist_noinst_DATA =                                 \
    sources/xml-test-regexp-no-output.xml           \
    sources/xml-test-regexp-repeat-expression.xml   \
    sources/xml-test-strings.xml                    \
-   sources/xml-test-log.xml.in
+   sources/xml-test-log.xml.in                     \
+   sources/xml-test-expandable-string.xml
 
 noinst_PROGRAMS = $(TEST_PROGS)
 
