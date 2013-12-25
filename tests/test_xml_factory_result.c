@@ -169,8 +169,8 @@ main(int argc, char **argv)
   test_xml_factory_setup ();
 
   g_test_add_func ("/xml-factory/result/empty", test_xml_factory_result_empty);
-  g_test_add_func ("/xml-factor/result/skip", test_xml_factory_result_skip);
-  g_test_add_func ("/xml-factor/result/cancel", test_xml_factory_result_cancel);
+  g_test_add_func ("/xml-factory/result/skip", test_xml_factory_result_skip);
+  g_test_add_func ("/xml-factory/result/cancel", test_xml_factory_result_cancel);
 
   return g_test_run ();
 }
