@@ -162,10 +162,11 @@
 
   <xs:complexType name="fetchType" mixed="true">
     <xs:choice>
-      <xs:element name="url"     type="urlType"     minOccurs="0"/>
-      <xs:element name="rest"    type="restType"    minOccurs="0"/>
-      <xs:element name="regexp"  type="regexpType"  minOccurs="0"/>
-      <xs:element name="replace" type="replaceType" minOccurs="0"/>
+      <xs:element name="url"     type="urlType"          minOccurs="0"/>
+      <xs:element name="rest"    type="restType"         minOccurs="0"/>
+      <xs:element name="regexp"  type="regexpType"       minOccurs="0"/>
+      <xs:element name="replace" type="replaceType"      minOccurs="0"/>
+      <xs:element name="script"  type="expandableString" minoccurs="0"/>
     </xs:choice>
   </xs:complexType>
 
@@ -238,6 +239,7 @@
         <xs:element name="description" type="expandableString" minOccurs="0"/>
         <xs:element name="strings"     type="stringsType"      minOccurs="0" maxOccurs="unbounded"/>
         <xs:element name="config"      type="configType"       minOccurs="0"/>
+        <xs:element name="script"      type="expandableString" minOccurs="0"/>
         <xs:element name="operation"   type="supportedOperationType"/>
         <xs:element name="provide"     type="provideType"/>
       </xs:sequence>

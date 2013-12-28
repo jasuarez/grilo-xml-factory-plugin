@@ -35,11 +35,14 @@
 #include "log.h"
 
 #include <json-glib/json-glib.h>
+#include <lauxlib.h>
 #include <libxml/parser.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#include <lua.h>
+#include <lualib.h>
 #include <net/grl-net.h>
 #include <rest/oauth-proxy.h>
 #include <rest/rest-proxy.h>
@@ -192,6 +195,7 @@ struct _GrlXmlFactorySourcePrivate {
   GrlXmlDebug debug;
   gint autosplit;
   GrlKeyID private_keys_key;
+  lua_State *lua_state;
 };
 
 gboolean grl_xml_factory_plugin_init (GrlRegistry *registry,
@@ -276,6 +280,7 @@ static void xml_spec_get_basic_info (xmlNodePtr xml_node,
                                      gchar **description,
                                      xmlNodePtr *strings,
                                      xmlNodePtr *config,
+                                     xmlNodePtr *script,
                                      xmlNodePtr *operation,
                                      xmlNodePtr *provide);
 
@@ -284,6 +289,10 @@ static GrlConfig *xml_spec_get_config (xmlNodePtr xml_config_node,
                                        GList **config_keys);
 
 static GList* xml_spec_get_strings (xmlNodePtr xml_node);
+
+static lua_State *xml_spec_get_init_script (xmlNodePtr xml_node,
+                                            GrlConfig *config,
+                                            GList *strings);
 
 static MediaTemplate *xml_spec_get_provide_media_template (GrlXmlFactorySource *source,
                                                            xmlNodePtr xml_node,
@@ -418,6 +427,10 @@ grl_xml_factory_source_finalize (GObject *object)
     g_hash_table_unref (self->priv->results);
   }
 
+  if (self->priv->lua_state) {
+    lua_close (self->priv->lua_state);
+  }
+
   G_OBJECT_CLASS (grl_xml_factory_source_parent_class)->finalize (object);
 }
 
@@ -502,6 +515,7 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   gint api_version;
   gint autosplit = 0;
   gint i;
+  lua_State *lua_state = NULL;
   xmlChar *api_version_str;
   xmlChar *autosplit_str;
   xmlDocPtr xml_doc;
@@ -509,6 +523,7 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   xmlNodePtr xml_node;
   xmlNodePtr xml_operation = NULL;
   xmlNodePtr xml_provide = NULL;
+  xmlNodePtr xml_script = NULL;
   xmlNodePtr xml_strings = NULL;
   xmlSchemaValidCtxtPtr validate_ctx;
 
@@ -587,7 +602,8 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   xml_node = xml_get_node (xml_node->children);
   xml_spec_get_basic_info (xml_node, &source_id, &source_name,
                            &source_description, &xml_strings,
-                           &xml_config, &xml_operation, &xml_provide);
+                           &xml_config, &xml_script,
+                           &xml_operation, &xml_provide);
 
   /* Check config */
   default_config = xml_spec_get_config (xml_config, source_id, &config_keys);
@@ -610,6 +626,21 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   /* Get located strings */
   if (xml_strings) {
     located_strings = xml_spec_get_strings (xml_strings);
+  }
+
+  /* Initialize script */
+  if (xml_script) {
+    lua_state = xml_spec_get_init_script (xml_script, merged_config, located_strings);
+    if (!lua_state) {
+      GRL_DEBUG ("Script initialization has failed; skipping source '%s'", source_id);
+      g_object_unref (merged_config);
+      g_list_free_full (config_keys, g_free);
+      g_free (source_id);
+      g_free (source_name);
+      g_free (source_description);
+      xmlFreeDoc (xml_doc);
+      return NULL;
+    }
   }
 
   /* Expand source name and description */
@@ -638,6 +669,7 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
 
   source->priv->config = merged_config;
   source->priv->located_strings = located_strings;
+  source->priv->lua_state = lua_state;
 
   if (user_agent) {
     source->priv->user_agent = user_agent;
@@ -1298,8 +1330,9 @@ xml_spec_key_is_supported (GrlKeyID key)
 }
 
 static ExpandableString *
-xml_spec_get_expandable_string (GrlXmlFactorySource *source,
-                                xmlNodePtr xml_node)
+xml_spec_get_expandable_string_impl (xmlNodePtr xml_node,
+                                     GrlConfig *config,
+                                     GList *located_strings)
 {
   ExpandableString *exp_str = NULL;
   xmlChar *string;
@@ -1307,12 +1340,21 @@ xml_spec_get_expandable_string (GrlXmlFactorySource *source,
   string = xmlNodeGetContent (xml_node);
   if (STR_HAS_VALUE (string)) {
     exp_str = expandable_string_new ((const gchar *) string,
-                                     source->priv->config,
-                                     source->priv->located_strings);
+                                     config,
+                                     located_strings);
   }
   xmlFree (string);
 
   return exp_str;
+}
+
+static ExpandableString *
+xml_spec_get_expandable_string (GrlXmlFactorySource *source,
+                                xmlNodePtr xml_node)
+{
+  return xml_spec_get_expandable_string_impl (xml_node,
+                                              source->priv->config,
+                                              source->priv->located_strings);
 }
 
 static RestData *
@@ -1640,6 +1682,7 @@ xml_spec_get_basic_info (xmlNodePtr xml_node,
                          gchar **description,
                          xmlNodePtr *strings,
                          xmlNodePtr *config,
+                         xmlNodePtr *script,
                          xmlNodePtr *operation,
                          xmlNodePtr *provide)
 {
@@ -1670,6 +1713,13 @@ xml_spec_get_basic_info (xmlNodePtr xml_node,
     xml_node = xml_get_node (xml_node->next);
   } else {
     *config = NULL;
+  }
+
+  if (xmlStrcmp (xml_node->name, (const xmlChar *) "script") == 0) {
+    *script = xml_get_node (xml_node->children);
+    xml_node = xml_get_node (xml_node->next);
+  } else {
+    *script = NULL;
   }
 
   *operation = xml_node;
@@ -1793,6 +1843,52 @@ xml_spec_get_strings (xmlNodePtr xml_node)
   g_free (defined_strings_set);
 
   return located_strings;
+}
+
+static lua_State *
+xml_spec_get_init_script (xmlNodePtr xml_node,
+                          GrlConfig *config,
+                          GList *strings)
+{
+  lua_State *L;
+  ExpandableString *lua_script;
+  gchar *lua_script_str;
+  int lua_status;
+
+  L = luaL_newstate ();
+  if (!L) {
+    goto error;
+  }
+
+  luaL_openlibs (L);
+
+  lua_script = xml_spec_get_expandable_string_impl (xml_node, config, strings);
+  lua_script_str = expandable_string_get_value (lua_script, NULL);
+
+  /* Load the initialization script and check if it succeded */
+  lua_status = luaL_loadstring(L, lua_script_str);
+  expandable_string_free_value (lua_script, lua_script_str);
+  expandable_string_free (lua_script);
+
+  if (lua_status) {
+    goto error;
+  }
+  lua_status = lua_pcall (L, 0, 1, 0);
+  if (lua_status) {
+    goto error;
+  }
+  if (lua_type (L, -1) == LUA_TBOOLEAN &&
+      !lua_toboolean (L, -1)) {
+    goto error;
+  }
+  lua_pop (L, 1);
+  return L;
+
+ error:
+  if (L) {
+    lua_close (L);
+  }
+  return NULL;
 }
 
 static gint
