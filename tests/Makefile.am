@@ -17,6 +17,7 @@ TEST_PROGS +=                    \
    test_xml_factory_strings      \
    test_xml_factory_log          \
    test_xml_factory_private_keys \
+   test_xml_factory_script       \
    test_xml_factory_expandable_string
 
 #check_PROGRAMS = $(TESTS)
@@ -104,6 +105,12 @@ test_xml_factory_expandable_string_LDADD =	\
 test_xml_factory_expandable_string_CFLAGS =	\
 	$(test_xml_factory_defines)
 
+test_xml_factory_script_LDADD =	\
+	@DEPS_LIBS@
+
+test_xml_factory_script_CFLAGS =	\
+	$(test_xml_factory_defines)
+
 # Distribute the tests data:
 dist_noinst_DATA =                                 \
    data/network-data.ini                           \
@@ -121,7 +128,8 @@ dist_noinst_DATA =                                 \
    sources/xml-test-regexp-repeat-expression.xml   \
    sources/xml-test-strings.xml                    \
    sources/xml-test-log.xml.in                     \
-   sources/xml-test-expandable-string.xml
+   sources/xml-test-expandable-string.xml          \
+	sources/xml-test-script-init-success.xml
 
 noinst_PROGRAMS = $(TEST_PROGS)
 

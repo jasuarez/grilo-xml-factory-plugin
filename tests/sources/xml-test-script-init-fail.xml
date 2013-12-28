@@ -1,0 +1,35 @@
+<source api="1">
+  <id>xml-test-script-init-fail</id>
+  <name>XML Test Script Init Fail</name>
+  <script>
+    <![CDATA[
+             function foo(a)
+               return a .. " foo"
+             end
+             return false
+    ]]>
+  </script>
+
+  <operation>
+    <browse>
+      <result>
+        <![CDATA[
+                 <data>
+                 <id>1</id>
+                 <artist>John Doe</<artist>
+                 <title>Unknown</title>
+                 </data>
+        ]]>
+      </result>
+    </browse>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           query="/data">
+      <key name="id">id</key>
+      <key name="artist">artist</key>
+      <key name="title">title</key>
+    </media>
+  </provide>
+</source>

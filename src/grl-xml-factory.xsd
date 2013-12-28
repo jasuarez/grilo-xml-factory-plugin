@@ -166,7 +166,7 @@
       <xs:element name="rest"    type="restType"         minOccurs="0"/>
       <xs:element name="regexp"  type="regexpType"       minOccurs="0"/>
       <xs:element name="replace" type="replaceType"      minOccurs="0"/>
-      <xs:element name="script"  type="expandableString" minoccurs="0"/>
+      <xs:element name="script"  type="expandableString" minOccurs="0"/>
     </xs:choice>
   </xs:complexType>
 
