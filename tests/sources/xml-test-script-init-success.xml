@@ -1,16 +1,43 @@
 <source api="1">
   <id>xml-test-script-init-success</id>
-  <name>XML Test Script Init Sucess</name>
+  <name>XML Test Script Init Success</name>
   <script>
     <![CDATA[
              function foo(a)
                return a .. " foo"
              end
-             return true
     ]]>
   </script>
 
   <operation>
+    <search>
+      <result>
+        <regexp>
+          <input>
+            <script>
+              search_text = "%param:search_text%"
+              if (search_text == "string") then
+                return foo("title")
+              elseif (search_text == "number") then
+                return 42;
+              elseif (search_text == "invalid") then
+                return foo
+              end
+            </script>
+          </input>
+          <output>
+            <![CDATA[
+                     <data>
+                     <id>1</id>
+                     <artist>John Doe</artist>
+                     <title>\1</title>
+                     </data>
+            ]]>
+          </output>
+        </regexp>
+      </result>
+    </search>
+
     <browse>
       <result>
         <![CDATA[
