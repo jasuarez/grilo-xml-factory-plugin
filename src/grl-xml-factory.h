@@ -83,4 +83,8 @@ GType grl_xml_factory_source_get_type (void);
 gboolean grl_xml_factory_source_is_debug (GrlXmlFactorySource *source,
                                           GrlXmlDebug flag);
 
+gchar *grl_xml_factory_source_run_script (GrlXmlFactorySource *source,
+                                          const gchar *script,
+                                          GError **error);
+
 #endif /* _GRL_XML_FACTORY_SOURCE_H_ */

@@ -1572,6 +1572,7 @@ xml_spec_get_fetch_data (GrlXmlFactorySource *source,
                          xmlNodePtr xml_node)
 {
   ExpandableString *raw = NULL;
+  ExpandableString *script_data = NULL;
   FetchData *data = NULL;
   FetchData *url_data = NULL;
   RegExpData *regexp_data = NULL;
@@ -1587,6 +1588,12 @@ xml_spec_get_fetch_data (GrlXmlFactorySource *source,
   if (xml_node->type == XML_TEXT_NODE ||
       xml_node->type == XML_CDATA_SECTION_NODE) {
     raw = xml_spec_get_expandable_string (source, xml_node);
+  } else if (xmlStrcmp (xml_node->name, (const xmlChar *) "script") == 0) {
+    script_data =
+      xml_spec_get_expandable_string (source, xml_node);
+    if (!script_data) {
+      return NULL;
+    }
   } else if (xmlStrcmp (xml_node->name, (const xmlChar *) "url") == 0) {
     url_data =
       xml_spec_get_fetch_data (source, xml_get_node (xml_node->children));
@@ -1614,6 +1621,10 @@ xml_spec_get_fetch_data (GrlXmlFactorySource *source,
     data = fetch_data_new ();
     data->type = FETCH_RAW;
     data->data.raw = raw;
+  } else if (script_data) {
+    data = fetch_data_new ();
+    data->type = FETCH_SCRIPT;
+    data->data.raw = script_data;
   } else if (url_data) {
     data = fetch_data_new ();
     data->type = FETCH_URL;
@@ -1877,7 +1888,7 @@ xml_spec_get_init_script (xmlNodePtr xml_node,
   if (lua_status) {
     goto error;
   }
-  if (lua_type (L, -1) == LUA_TBOOLEAN &&
+  if (lua_type (L, -1) != LUA_TNIL &&
       !lua_toboolean (L, -1)) {
     goto error;
   }
@@ -3529,6 +3540,38 @@ grl_xml_factory_source_is_debug (GrlXmlFactorySource *source,
                                  GrlXmlDebug flag)
 {
   return (source->priv->debug & flag);
+}
+
+gchar *
+grl_xml_factory_source_run_script (GrlXmlFactorySource *source,
+                                   const gchar *script,
+                                   GError **error)
+{
+  gchar *result;
+  int status;
+
+  if (!source->priv->lua_state) {
+    source->priv->lua_state = luaL_newstate ();
+    luaL_openlibs (source->priv->lua_state);
+  }
+
+  status = luaL_loadstring (source->priv->lua_state, script);
+  if (!status) {
+    status = lua_pcall (source->priv->lua_state, 0, 1, 0);
+  }
+  if (status) {
+    g_set_error (error,
+                 GRL_CORE_ERROR,
+                 0,
+                 "Cannot run script: %s",
+                 lua_tostring (source->priv->lua_state, -1));
+    lua_pop (source->priv->lua_state, 1);
+    return NULL;
+  }
+
+  result = g_strdup (lua_tostring (source->priv->lua_state, -1));
+  lua_pop (source->priv->lua_state, 1);
+  return result;
 }
 
 static const GList *

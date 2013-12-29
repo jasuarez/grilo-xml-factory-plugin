@@ -21,6 +21,7 @@
  */
 
 #include "fetch.h"
+#include "grl-xml-factory.h"
 
 #include <string.h>
 
@@ -699,6 +700,7 @@ fetch_data_free (FetchData *data)
 
   switch (data->type) {
   case FETCH_RAW:
+  case FETCH_SCRIPT:
     expandable_string_free (data->data.raw);
     break;
   case FETCH_URL:
@@ -730,8 +732,10 @@ fetch_data_get (GrlXmlFactorySource *source,
                 DataFetchedCb send_callback,
                 gpointer user_data)
 {
+  GError *error = NULL;
   NetProcessData *net_data;
   ReplaceProcessData *replace_data;
+  gchar *script_result;
   gchar *use_raw;
 
   if (!fetch_data) {
@@ -744,6 +748,16 @@ fetch_data_get (GrlXmlFactorySource *source,
     GRL_XML_DEBUG (source, debug_flag, "Use '%s'", use_raw);
     send_callback (use_raw, user_data, NULL);
     expandable_string_free_value (fetch_data->data.raw, use_raw);
+    return;
+  }
+
+  if (fetch_data->type == FETCH_SCRIPT) {
+    use_raw = expandable_string_get_value (fetch_data->data.raw, expand_data);
+    script_result = grl_xml_factory_source_run_script (source, use_raw, &error);
+    send_callback (script_result, user_data, error);
+    expandable_string_free_value (fetch_data->data.raw, use_raw);
+    g_free (script_result);
+    g_clear_error (&error);
     return;
   }
 
