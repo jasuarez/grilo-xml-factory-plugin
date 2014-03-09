@@ -237,6 +237,7 @@
         <xs:element name="id"          type="xs:string"/>
         <xs:element name="name"        type="expandableString"/>
         <xs:element name="description" type="expandableString" minOccurs="0"/>
+        <xs:element name="icon"        type="expandableString" minOccurs="0"/>
         <xs:element name="strings"     type="stringsType"      minOccurs="0" maxOccurs="unbounded"/>
         <xs:element name="config"      type="configType"       minOccurs="0"/>
         <xs:element name="script"      type="expandableString" minOccurs="0"/>
