@@ -1042,13 +1042,9 @@ operation_call_data_new (void)
 inline static void
 operation_call_data_free (OperationCallData *data)
 {
-  if (data->xml_doc_reffed) {
-    dataref_unref (data->xml_doc_reffed);
-  }
-
-  if (data->expand_data) {
-    expand_data_unref (data->expand_data);
-  }
+  g_clear_pointer (&data->xml_doc_reffed, (GDestroyNotify) dataref_unref);
+  g_clear_pointer (&data->expand_data, (GDestroyNotify) expand_data_unref);
+  g_clear_object (&data->cancellable);
 
   g_slice_free (OperationCallData, data);
 }
