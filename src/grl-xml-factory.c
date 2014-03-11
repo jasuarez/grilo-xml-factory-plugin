@@ -2543,7 +2543,9 @@ get_raw_from_path (GrlXmlFactorySource *source,
       xmlXPathFreeObject (xpath_value);
       return xpath_strvalue;
     }
+    xmlXPathFreeObject (xpath_value);
   }
+
 
   if (raw_data->json_array) {
     json_node = json_path_query (expanded_raw,
