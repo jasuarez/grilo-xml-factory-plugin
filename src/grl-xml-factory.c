@@ -829,6 +829,41 @@ gtype_to_string (GType t)
   }
 }
 
+/* Returns the value of @key in @media as string. If the original value is not a
+   string, must_free will be set as %TRUE to tell caller the value must be freed
+   to avoid leaks */
+static gchar *
+get_data_as_string (GrlMedia *media,
+                    GrlKeyID key,
+                    gboolean *must_free)
+{
+  GType key_type;
+
+  key_type = grl_metadata_key_get_type (key);
+
+  if (key_type == G_TYPE_STRING) {
+    *must_free = FALSE;
+    return (gchar *) grl_data_get_string (GRL_DATA (media), key);
+  }
+
+  *must_free = TRUE;
+
+  if (key_type == G_TYPE_INT) {
+    return g_strdup_printf ("%d", grl_data_get_int (GRL_DATA (media), key));
+  }
+
+  if (key_type == G_TYPE_FLOAT) {
+    return g_strdup_printf ("%f", grl_data_get_float (GRL_DATA (media), key));
+  }
+
+  if (key_type == G_TYPE_DATE_TIME) {
+    return g_date_time_format (grl_data_get_boxed (GRL_DATA (media), key),
+                               "%FT%T");
+  }
+
+  return NULL;
+}
+
 /* Inserts @value into @media, taking care of converting to proper type */
 static void
 insert_value (GrlXmlFactorySource *source,
@@ -2192,7 +2227,7 @@ xml_spec_get_operation_requirements (xmlNodePtr *node,
       continue;
     }
 
-    if (grl_metadata_key_get_type (grl_key) != G_TYPE_STRING) {
+    if (!xml_spec_key_is_supported (grl_key)) {
       GRL_WARNING ("Invalid key '%s': unsupported type; ignoring", key_name);
       g_free (key_name);
       continue;
@@ -3411,9 +3446,10 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
                               GrlMedia *media,
                               GList **missing_keys)
 {
-  OperationRequirement *req;
   GList *req_list;
-  const gchar *key_value;
+  OperationRequirement *req;
+  gboolean should_free;
+  gchar *key_value;
 
   GRL_XML_DEBUG (factory_source,
                  GRL_XML_DEBUG_OPERATION,
@@ -3437,7 +3473,7 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
        req_list = g_list_next (req_list)) {
     req = (OperationRequirement *) req_list->data;
     if (media) {
-      key_value = grl_data_get_string (GRL_DATA (media), req->key);
+      key_value = get_data_as_string (media, req->key, &should_free);
       if (key_value) {
         if (req->match_reg) {
           if (g_regex_match (req->match_reg, key_value, 0, NULL)) {
@@ -3463,6 +3499,11 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
                          grl_metadata_key_get_name (req->key),
                          key_value);
         }
+
+        if (should_free) {
+          g_free (key_value);
+        }
+
       } else {
           GRL_XML_DEBUG (factory_source,
                          GRL_XML_DEBUG_OPERATION,

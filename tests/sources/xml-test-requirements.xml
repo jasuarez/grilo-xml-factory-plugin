@@ -1,0 +1,40 @@
+<source api="1">
+  <id>xml-test-requirements</id>
+  <name>XML Test Requirements</name>
+
+  <operation>
+    <resolve>
+      <require>
+        <key name="artist">^Special.+</key>
+        <key name="bitrate">2..</key>
+      </require>
+      <result>
+        <![CDATA[
+                 <data>
+                 <title>Artist is %key:artist% (check matches)</title>
+                 </data>
+        ]]>
+      </result>
+    </resolve>
+
+    <resolve>
+      <require>
+        <key name="artist"/>
+      </require>
+      <result>
+        <![CDATA[
+                 <data>
+                 <title>Artist is %key:artist%</title>
+                 </data>
+        ]]>
+      </result>
+    </resolve>
+  </operation>
+
+  <provide>
+    <media type="audio"
+           select="/data">
+      <key name="title">title</key>
+    </media>
+  </provide>
+</source>

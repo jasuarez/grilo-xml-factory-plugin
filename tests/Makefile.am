@@ -11,6 +11,7 @@ INCLUDES = @DEPS_CFLAGS@
 
 TEST_PROGS +=                    \
    test_xml_factory_result       \
+   test_xml_factory_requirements	\
    test_xml_factory_replace      \
    test_xml_factory_url          \
    test_xml_factory_regexp       \
@@ -41,6 +42,15 @@ test_xml_factory_result_LDADD =	\
 	@DEPS_LIBS@
 
 test_xml_factory_result_CFLAGS =	\
+	$(test_xml_factory_defines)
+
+test_xml_factory_requirements_SOURCES =	\
+	test_xml_factory_requirements.c
+
+test_xml_factory_requirements_LDADD =	\
+	@DEPS_LIBS@
+
+test_xml_factory_requirements_CFLAGS =	\
 	$(test_xml_factory_defines)
 
 test_xml_factory_replace_SOURCES =	\
