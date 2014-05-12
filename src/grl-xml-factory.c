@@ -3454,64 +3454,77 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
   }
 
   /* Check each key */
-  req_list = operation->requirements;
-  while (req_list) {
+  for (req_list = operation->requirements;
+       req_list;
+       req_list = g_list_next (req_list)) {
     req = (OperationRequirement *) req_list->data;
-    if (media) {
-      key_value = get_data_as_string (media, req->key, &should_free);
-      if (!key_value) {
-        if (req->match_reg) {
-          key_value = "";
-          should_free = FALSE;
-        } else {
-          if (missing_keys) {
-            *missing_keys = g_list_prepend (*missing_keys, GRLKEYID_TO_POINTER (req->key));
-          } else {
-            return FALSE;
-          }
-        }
-      }
-
-      if (key_value &&
-          req->match_reg &&
-          !g_regex_match (req->match_reg, key_value, 0, NULL)) {
-        GRL_XML_DEBUG (factory_source,
-                       GRL_XML_DEBUG_OPERATION,
-                       "      Checking if '%s' key value ('%s') matches '%s': failed",
-                       grl_metadata_key_get_name (req->key),
-                       key_value,
-                       g_regex_get_pattern (req->match_reg));
-
-        if (missing_keys) {
-          g_list_free (*missing_keys);
-          *missing_keys = NULL;
-        }
-        if (should_free) {
-          g_free (key_value);
-        }
-        return FALSE;
-      } else {
-        GRL_XML_DEBUG (factory_source,
-                       GRL_XML_DEBUG_OPERATION,
-                       "      Checking if '%s' key value ('%s') matches '%s': succeed",
-                       grl_metadata_key_get_name (req->key),
-                       key_value,
-                       req->match_reg? g_regex_get_pattern (req->match_reg): "");
-      }
-      if (should_free) {
-        g_free (key_value);
-      }
-    } else {
+    if (!media) {
       if (missing_keys) {
         *missing_keys = g_list_prepend (*missing_keys, GRLKEYID_TO_POINTER (req->key));
+        continue;
       } else {
         return FALSE;
       }
     }
-    req_list = g_list_next (req_list);
+
+    key_value = get_data_as_string (media, req->key, &should_free);
+    if (!key_value) {
+      if (req->match_reg) {
+        key_value = "";
+        should_free = FALSE;
+      } else {
+        if (missing_keys) {
+          *missing_keys = g_list_prepend (*missing_keys, GRLKEYID_TO_POINTER (req->key));
+          continue;
+        } else {
+          return FALSE;
+        }
+      }
+    }
+
+    if (req->match_reg) {
+      if (g_regex_match (req->match_reg, key_value, 0, NULL)) {
+        GRL_XML_DEBUG (factory_source,
+                       GRL_XML_DEBUG_OPERATION,
+                       "      Checking if \"%s\" key value (\"%s\") matches \"%s\": succeed",
+                       grl_metadata_key_get_name (req->key),
+                       key_value,
+                       g_regex_get_pattern (req->match_reg));
+      } else {
+        GRL_XML_DEBUG (factory_source,
+                       GRL_XML_DEBUG_OPERATION,
+                       "      Checking if \"%s\" key value (\"%s\") matches \"%s\": failed",
+                       grl_metadata_key_get_name (req->key),
+                       key_value,
+                       g_regex_get_pattern (req->match_reg));
+        if (should_free) {
+          g_free (key_value);
+        }
+        if (missing_keys && *missing_keys) {
+          g_list_free (*missing_keys);
+          *missing_keys = NULL;
+        }
+        return FALSE;
+      }
+    } else {
+      GRL_XML_DEBUG (factory_source,
+                     GRL_XML_DEBUG_OPERATION,
+                     "      Checking if \"%s\" key has a value: succeed (\"%s\")",
+                     grl_metadata_key_get_name (req->key),
+                     key_value);
+    }
+
+    if (should_free) {
+      g_free (key_value);
+    }
   }
+
   if (!media) {
-      return FALSE;
+    return FALSE;
+  }
+
+  if (missing_keys && *missing_keys != NULL) {
+    return FALSE;
   }
 
   GRL_XML_DEBUG (factory_source,
