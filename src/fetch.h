@@ -84,8 +84,12 @@ typedef struct _RestParameter {
 } RestParameter;
 
 typedef struct _RestData {
-  RestProxy *proxy;
-  gchar *endpoint;
+  ExpandableString *endpoint;
+  gchar *api_key;
+  gchar *api_secret;
+  gchar *api_token;
+  gchar *api_token_secret;
+  gchar *user_agent;
   gchar *method;
   ExpandableString *referer;
   ExpandableString *function;

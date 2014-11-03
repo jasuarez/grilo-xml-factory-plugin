@@ -38,7 +38,7 @@
       <xs:element name="function" type="expandableString" minOccurs="0"/>
       <xs:element name="param"    type="restParamType"    minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute name="endpoint" type="xs:string"        use="required"/>
+    <xs:attribute name="endpoint" type="expandableString"               use="required"/>
     <xs:attribute name="method"   type="xs:string"        default="GET"/>
     <xs:attribute name="oauth"    type="xs:boolean"       default="false"/>
     <xs:attribute name="referer"  type="expandableString"/>
