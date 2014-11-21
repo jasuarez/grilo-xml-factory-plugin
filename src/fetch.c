@@ -23,6 +23,8 @@
 #include "fetch.h"
 #include "grl-xml-factory.h"
 
+#include <rest/oauth-proxy.h>
+#include <rest/rest-proxy.h>
 #include <string.h>
 
 typedef struct _NetProcessData {
@@ -388,25 +390,45 @@ fetch_rest (GrlXmlFactorySource *source,
   GList *parameters;
   NetProcessData *data;
   RestParameter *param;
+  RestProxy *proxy;
   RestProxyCall *call;
+  gchar *endpoint;
   gchar *use_function;
   gchar *use_referer;
   gchar *use_value;
 
-  call = rest_proxy_new_call (fetch_data->data.rest->proxy);
+  endpoint = expandable_string_get_value (fetch_data->data.rest->endpoint, expand_data);
+  if (fetch_data->data.rest->api_key) {
+    proxy = oauth_proxy_new_with_token (fetch_data->data.rest->api_key,
+                                        fetch_data->data.rest->api_secret,
+                                        fetch_data->data.rest->api_token,
+                                        fetch_data->data.rest->api_token_secret,
+                                        endpoint,
+                                        FALSE);
+  } else {
+    proxy = rest_proxy_new (endpoint, FALSE);
+  }
+
+  if (fetch_data->data.rest->user_agent) {
+    rest_proxy_set_user_agent (proxy, fetch_data->data.rest->user_agent);
+  }
+
+  call = rest_proxy_new_call (proxy);
 
   if (fetch_data->data.rest->function) {
     use_function = get_raw_callback (source, fetch_data->data.rest->function, get_raw_data);
     if (!use_function) {
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
+      g_object_unref (proxy);
+      expandable_string_free_value (fetch_data->data.rest->endpoint, endpoint);
       return;
     }
 
     GRL_XML_DEBUG (source,
                    debug_flag,
                    "Invoking RESTful \"%s/%s",
-                   fetch_data->data.rest->endpoint,
+                   endpoint,
                    use_function? use_function: "");
 
     rest_proxy_call_set_function (call, use_function);
@@ -415,8 +437,10 @@ fetch_rest (GrlXmlFactorySource *source,
     GRL_XML_DEBUG (source,
                    debug_flag,
                    "Invoking RESTful \"%s",
-                   fetch_data->data.rest->endpoint);
+                   endpoint);
   }
+
+  expandable_string_free_value (fetch_data->data.rest->endpoint, endpoint);
 
   /* Expand each of the parameters */
   for (parameters = fetch_data->data.rest->parameters;
@@ -431,6 +455,7 @@ fetch_rest (GrlXmlFactorySource *source,
                      param->name);
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
+      g_object_unref (proxy);
       return;
     }
 
@@ -448,6 +473,7 @@ fetch_rest (GrlXmlFactorySource *source,
                              "Canot invoke RESTful: \"referer\" parameter can not be expanded");
       send_callback (NULL, user_data, NULL);
       g_object_unref (call);
+      g_object_unref (proxy);
       return;
     }
 
@@ -479,6 +505,7 @@ fetch_rest (GrlXmlFactorySource *source,
   }
 
   g_object_unref (call);
+  g_object_unref (proxy);
 }
 
 static void
@@ -675,12 +702,14 @@ rest_data_new ()
 void
 rest_data_free (RestData *data)
 {
-  if (data->proxy) {
-    g_object_unref (data->proxy);
-  }
-  g_free (data->endpoint);
   g_free (data->method);
-  expandable_string_free  (data->function);
+  g_free (data->api_key);
+  g_free (data->api_secret);
+  g_free (data->api_token);
+  g_free (data->api_token_secret);
+
+  expandable_string_free (data->endpoint);
+  expandable_string_free (data->function);
 
   g_list_free_full (data->parameters, (GDestroyNotify) rest_parameter_free);
 

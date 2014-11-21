@@ -44,8 +44,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <net/grl-net.h>
-#include <rest/oauth-proxy.h>
-#include <rest/rest-proxy.h>
 #include <string.h>
 
 #define GRL_XML_FACTORY_SOURCE_GET_PRIVATE(object)           \
@@ -182,7 +180,6 @@ typedef struct _FetchItemData {
 
 struct _GrlXmlFactorySourcePrivate {
   GHashTable *results;
-  GList *rest_proxy_list;
   GList *operations[OP_LAST];
   GList *supported_keys;
   GList *slow_keys;
@@ -448,11 +445,6 @@ grl_xml_factory_source_dispose (GObject *object)
   if (self->priv->wc) {
     g_object_unref (self->priv->wc);
     self->priv->wc = NULL;
-  }
-
-  if (self->priv->rest_proxy_list) {
-    g_list_free_full (self->priv->rest_proxy_list, g_object_unref);
-    self->priv->rest_proxy_list = NULL;
   }
 
   G_OBJECT_CLASS (grl_xml_factory_source_parent_class)->dispose (object);
@@ -1186,31 +1178,6 @@ all_options_have_value (GList *options,
   return TRUE;
 }
 
-static RestProxy *
-find_rest_proxy (GList *proxy_list,
-                 const gchar *endpoint,
-                 gboolean oauth)
-{
-  gchar *url;
-
-  while (proxy_list) {
-    if (OAUTH_IS_PROXY (proxy_list->data) == oauth) {
-      g_object_get (G_OBJECT (proxy_list->data),
-                    "url-format", &url,
-                    NULL);
-      if (g_strcmp0 (url, endpoint) == 0) {
-        g_free (url);
-        return proxy_list->data;
-      }
-      g_free (url);
-    }
-
-    proxy_list = g_list_next (proxy_list);
-  }
-
-  return NULL;
-}
-
 static void
 merge_hashtables (GHashTable *t1,
                   GHashTable *t2)
@@ -1414,20 +1381,20 @@ static RestData *
 xml_spec_get_rest (GrlXmlFactorySource *source,
                    xmlNodePtr xml_node)
 {
+  ExpandableString *endpoint;
   RestData *rest_data;
-  RestProxy *rest_proxy;
   gboolean needs_oauth;
-  gchar *api_key;
-  gchar *api_secret;
-  gchar *api_token;
-  gchar *api_token_secret;
-  gchar *endpoint;
-  xmlChar *xmlCharMethod;
-  xmlChar *xmlCharReferer;
-  gchar *method;
+  gchar *api_key = NULL;
+  gchar *api_secret = NULL;
+  gchar *api_token = NULL;
+  gchar *api_token_secret = NULL;
   gchar *function_name;
+  gchar *method;
   gchar *param_name;
   gchar *param_value;
+  gchar *unexpanded_endpoint;
+  xmlChar *xmlCharMethod;
+  xmlChar *xmlCharReferer;
   xmlNodePtr xml_child_node;
 
   /* Check HTTP method (GET or POST, default GET) */
@@ -1441,48 +1408,43 @@ xml_spec_get_rest (GrlXmlFactorySource *source,
 
   /* Check what is the endpoint, and check if we already have a RestProxy for it */
   needs_oauth = xml_get_property_boolean (xml_node, (const xmlChar *) "oauth");
-  endpoint = (gchar *) xmlGetProp (xml_node, (const xmlChar *) "endpoint");
-  rest_proxy = find_rest_proxy (source->priv->rest_proxy_list, endpoint, needs_oauth);
+  unexpanded_endpoint = (gchar *) xmlGetProp (xml_node, (const xmlChar *) "endpoint");
+  endpoint = expandable_string_new ((const gchar *) unexpanded_endpoint,
+                                    source->priv->config,
+                                    source->priv->located_strings);
 
-  if (!rest_proxy) {
-    if (needs_oauth) {
-      /* Check we have everthing */
-      api_key = grl_config_get_api_key (source->priv->config);
-      api_secret = grl_config_get_api_secret (source->priv->config);
-      if (!api_key || !api_secret) {
-        GRL_DEBUG ("'api-key' or 'api-secret' not specified. Can not use RESTful operations");
-        g_free (api_key);
-        g_free (api_secret);
-        g_free (endpoint);
-        g_free (method);
-        return NULL;
-      }
-
-      api_token = grl_config_get_api_token (source->priv->config);
-      api_token_secret = grl_config_get_api_token_secret (source->priv->config);
-      rest_proxy = oauth_proxy_new_with_token (api_key, api_secret,
-                                               api_token, api_token_secret,
-                                               endpoint, FALSE);
+  if (needs_oauth) {
+    /* Check we have everything */
+    api_key = grl_config_get_api_key (source->priv->config);
+    api_secret = grl_config_get_api_secret (source->priv->config);
+    if (!api_key || !api_secret) {
+      GRL_DEBUG ("'api-key' or 'api-secret' not specified. Can not use RESTful operations");
       g_free (api_key);
       g_free (api_secret);
-      g_free (api_token);
-      g_free (api_token_secret);
-    } else {
-      rest_proxy = rest_proxy_new (endpoint, FALSE);
+      g_free (unexpanded_endpoint);
+      g_free (method);
+      expandable_string_free (endpoint);
+      return NULL;
     }
-    if (source->priv->user_agent) {
-      rest_proxy_set_user_agent (rest_proxy, source->priv->user_agent);
-    }
-    source->priv->rest_proxy_list = g_list_prepend (source->priv->rest_proxy_list,
-                                                    rest_proxy);
-  } else {
-    rest_proxy = g_object_ref (rest_proxy);
+
+    api_token = grl_config_get_api_token (source->priv->config);
+    api_token_secret = grl_config_get_api_token_secret (source->priv->config);
+    g_free (api_key);
+    g_free (api_secret);
+    g_free (api_token);
+    g_free (api_token_secret);
   }
 
   rest_data = rest_data_new ();
-  rest_data->proxy = rest_proxy;
+  rest_data->api_key = api_key;
+  rest_data->api_secret = api_secret;
+  rest_data->api_token = api_token;
+  rest_data->api_token_secret = api_token_secret;
+  rest_data->user_agent = source->priv->user_agent;
   rest_data->endpoint = endpoint;
   rest_data->method = method;
+
+  g_free (unexpanded_endpoint);
 
   /* Check referer attribute */
   xmlCharReferer = xmlGetProp (xml_node, (const xmlChar *) "referer");
