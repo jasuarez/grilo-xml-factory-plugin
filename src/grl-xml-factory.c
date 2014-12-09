@@ -242,6 +242,9 @@ static GrlConfig *merge_all_configs (const gchar *source_id,
                                      GList *available_configs,
                                      GrlConfig *default_config);
 
+static GrlMedia * merge_medias (GrlMedia *original_media,
+                                GrlMedia *new_media);
+
 static gboolean all_options_have_value (GList *options,
                                         GrlConfig *config);
 
@@ -2344,66 +2347,13 @@ resolve_send_result_cb (GrlMedia *media,
                         GrlSourceResolveSpec *rs,
                         GError *error)
 {
-  GHashTable *new_private_keys;
-  GHashTable *old_private_keys;
-  GList *k;
-  GList *keys;
-  gchar *new_private_keys_string;
-
   if (error && !error->code) {
     error->code = GRL_CORE_ERROR_RESOLVE_FAILED;
   }
 
   /* We need to update the media sent by user; so let's merge both medias */
   if (media) {
-    /* Merge private keys */
-
-    new_private_keys =
-      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (media),
-                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
-                                        -1,
-                                        NULL);
-    old_private_keys =
-      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (rs->media),
-                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
-                                        -1,
-                                        NULL);
-    if (new_private_keys) {
-      if (old_private_keys) {
-        merge_hashtables (new_private_keys, old_private_keys);
-        new_private_keys_string = json_ghashtable_serialize_data (new_private_keys, NULL);
-        g_hash_table_unref (old_private_keys);
-      } else {
-        new_private_keys_string = NULL;
-      }
-      g_hash_table_unref (new_private_keys);
-      if (new_private_keys_string) {
-        grl_data_set_string (GRL_DATA (media),
-                             GRL_METADATA_KEY_PRIVATE_KEYS,
-                             new_private_keys_string);
-        g_free (new_private_keys_string);
-      }
-    } else {
-      if (old_private_keys) {
-        new_private_keys_string = json_ghashtable_serialize_data (old_private_keys, NULL);
-        grl_data_set_string (GRL_DATA (media),
-                             GRL_METADATA_KEY_PRIVATE_KEYS,
-                             new_private_keys_string);
-        g_free (new_private_keys_string);
-        g_hash_table_unref (old_private_keys);
-      }
-    }
-
-    /* Merge remaining keys */
-    keys = grl_data_get_keys (GRL_DATA (media));
-
-    for (k = keys; k; k = g_list_next (k)) {
-      grl_data_set (GRL_DATA (rs->media),
-                    GRLPOINTER_TO_KEYID (k->data),
-                    grl_data_get (GRL_DATA (media),
-                                  GRLPOINTER_TO_KEYID (k->data)));
-    }
-    g_list_free (keys);
+    merge_medias(rs->media, media);
     g_object_unref (media);
   }
 
@@ -2604,6 +2554,70 @@ get_raw_from_operation (GrlXmlFactorySource *source,
   return expandable_string_get_value (raw, expand_data);
 }
 
+static GrlMedia *
+merge_medias (GrlMedia *original_media,
+              GrlMedia *new_media)
+{
+  GHashTable *new_private_keys;
+  GHashTable *old_private_keys;
+  GList *k;
+  GList *keys;
+  gchar *new_private_keys_string;
+
+  if (new_media) {
+    /* Merge private keys */
+
+    new_private_keys =
+      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (new_media),
+                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
+                                        -1,
+                                        NULL);
+    old_private_keys =
+      json_ghashtable_deserialize_data (grl_data_get_string (GRL_DATA (original_media),
+                                                             GRL_METADATA_KEY_PRIVATE_KEYS),
+                                        -1,
+                                        NULL);
+    if (new_private_keys) {
+      if (old_private_keys) {
+        merge_hashtables (new_private_keys, old_private_keys);
+        new_private_keys_string = json_ghashtable_serialize_data (new_private_keys, NULL);
+        g_hash_table_unref (old_private_keys);
+      } else {
+        new_private_keys_string = NULL;
+      }
+      g_hash_table_unref (new_private_keys);
+      if (new_private_keys_string) {
+        grl_data_set_string (GRL_DATA (new_media),
+                             GRL_METADATA_KEY_PRIVATE_KEYS,
+                             new_private_keys_string);
+        g_free (new_private_keys_string);
+      }
+    } else {
+      if (old_private_keys) {
+        new_private_keys_string = json_ghashtable_serialize_data (old_private_keys, NULL);
+        grl_data_set_string (GRL_DATA (new_media),
+                             GRL_METADATA_KEY_PRIVATE_KEYS,
+                             new_private_keys_string);
+        g_free (new_private_keys_string);
+        g_hash_table_unref (old_private_keys);
+      }
+    }
+
+    /* Merge remaining keys */
+    keys = grl_data_get_keys (GRL_DATA (new_media));
+
+    for (k = keys; k; k = g_list_next (k)) {
+      grl_data_set (GRL_DATA (original_media),
+                    GRLPOINTER_TO_KEYID (k->data),
+                    grl_data_get (GRL_DATA (new_media),
+                                  GRLPOINTER_TO_KEYID (k->data)));
+    }
+    g_list_free (keys);
+  }
+
+  return original_media;
+}
+
 static void
 use_resolve_done_cb (GrlMedia *media,
                      gint remaining,
@@ -2612,6 +2626,9 @@ use_resolve_done_cb (GrlMedia *media,
 {
   SendItem *send_item = (SendItem *) data->send_list->data;
   send_item->pending_count--;
+
+  /* We need to update the media sent by user; so let's merge both medias */
+  merge_medias(send_item->media, media);
 
   operation_call_send_list_run (data);
 }
