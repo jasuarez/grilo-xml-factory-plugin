@@ -31,7 +31,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 }
 

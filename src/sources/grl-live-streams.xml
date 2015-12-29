@@ -36,7 +36,7 @@
   <provide>
     <!-- list of channels -->
     <media ref="root"
-           type="box"
+           type="container"
            query="/channels/channel">
       <key name="id" force="true">name</key>
       <key name="title">name</key>

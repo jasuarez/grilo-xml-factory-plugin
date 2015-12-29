@@ -94,7 +94,7 @@
       <xs:enumeration value="audio"/>
       <xs:enumeration value="video"/>
       <xs:enumeration value="image"/>
-      <xs:enumeration value="box"/>
+      <xs:enumeration value="container"/>
     </xs:restriction>
   </xs:simpleType>
 

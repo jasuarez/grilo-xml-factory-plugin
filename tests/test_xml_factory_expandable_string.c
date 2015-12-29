@@ -33,7 +33,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 
   main_loop = g_main_loop_new (NULL, FALSE);
@@ -77,12 +77,12 @@ test_xml_factory_expandable_string_params (void)
                    "1");
 
   /* Search text (%param:search_text%) */
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "artist-test");
 
   /* Count (%param:count%) */
-  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_album (media),
                    ==,
                    "album-1");
 
@@ -97,7 +97,7 @@ test_xml_factory_expandable_string_params (void)
                    1);
 
   /* Page size (%param:page_size%) */
-  g_assert_cmpint (grl_media_audio_get_bitrate (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpint (grl_media_get_bitrate (media),
                    ==,
                    1);
 

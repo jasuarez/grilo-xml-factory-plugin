@@ -33,7 +33,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 
   main_loop = g_main_loop_new (NULL, FALSE);
@@ -83,12 +83,8 @@ test_xml_factory_result_skip (void)
 
   g_assert_cmpstr (grl_media_get_id (media), ==, "number3");
   g_assert_cmpstr (grl_media_get_title (media), ==, "title3");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
-                   ==,
-                   "artist3");
-  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
-                   ==,
-                   "album");
+  g_assert_cmpstr (grl_media_get_artist (media), ==, "artist3");
+  g_assert_cmpstr (grl_media_get_album (media), ==, "album");
 
   g_list_free_full (medias, g_object_unref);
   g_object_unref (options);
@@ -108,12 +104,8 @@ search_cb (GrlSource *source,
     g_assert (media);
     g_assert_cmpstr (grl_media_get_id (media), ==, "number1");
     g_assert_cmpstr (grl_media_get_title (media), ==, "title1");
-    g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
-                     ==,
-                     "artist1");
-    g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
-                     ==,
-                     "album");
+    g_assert_cmpstr (grl_media_get_artist (media), ==, "artist1");
+    g_assert_cmpstr (grl_media_get_album (media), ==, "album");
     g_assert_cmpint (remaining, ==, 2);
     g_object_unref (media);
     g_assert_no_error (error);

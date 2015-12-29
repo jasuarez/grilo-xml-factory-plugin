@@ -61,14 +61,14 @@
       </key>
     </media>
 
-    <media type="box" query="/categories/category">
+    <media type="container" query="/categories/category">
       <key name="id">keyword</key>
       <key name="title">name</key>
       <key name="thumbnail">icon</key>
     </media>
 
     <!-- This is for the case we want JSON data; remind JSON results are converted to XML -->
-    <media type="box"
+    <media type="container"
            query="$.*"
            format="json">
       <key name="id">$[(@.name)]</key>

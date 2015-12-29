@@ -6,7 +6,7 @@
 # Copyright (C) 2013 Igalia S.L.. All rights reserved.
 
 m4_define([prj_name],    [grilo-xml-factory-plugin])
-m4_define([prj_version], [0.2.1])
+m4_define([prj_version], [0.3.0])
 
 AC_INIT([prj_name],
         [prj_version],
@@ -68,7 +68,7 @@ fi
 
 # Plugins directory
 
-GRL_PLUGINS_DIR=`${PKG_CONFIG} --variable=plugindir grilo-0.2`
+GRL_PLUGINS_DIR=`${PKG_CONFIG} --variable=plugindir grilo-0.3`
 AC_SUBST(GRL_PLUGINS_DIR)
 AC_DEFINE_UNQUOTED(GRL_PLUGINS_DIR, "$GRL_PLUGINS_DIR", [Plugins directory])
 
@@ -77,14 +77,14 @@ AC_DEFINE_UNQUOTED(GRL_PLUGINS_DIR, "$GRL_PLUGINS_DIR", [Plugins directory])
 # ----------------------------------------------------------
 
 GLIB_MIN_REQ=2.28
-GRILO_MIN_REQ=0.2.6
+GRILO_MIN_REQ=0.3.0
 
 PKG_CHECK_MODULES([DEPS],
         glib-2.0 >= $GLIB_MIN_REQ
         gmodule-2.0
         gobject-2.0
-        grilo-0.2 >= $GRILO_MIN_REQ
-        grilo-net-0.2 
+        grilo-0.3 >= $GRILO_MIN_REQ
+        grilo-net-0.3 
         json-glib-1.0
         libxml-2.0
         lua5.2

@@ -31,7 +31,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 }
 
@@ -84,7 +84,7 @@ test_xml_factory_script_return_string (void)
   g_assert_cmpstr (grl_media_get_id (media),
                    ==,
                    "1");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "John Doe");
   g_assert_cmpstr (grl_media_get_title (media),
@@ -122,7 +122,7 @@ test_xml_factory_script_return_number (void)
   g_assert_cmpstr (grl_media_get_id (media),
                    ==,
                    "1");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "John Doe");
   g_assert_cmpstr (grl_media_get_title (media),
@@ -160,7 +160,7 @@ test_xml_factory_script_return_invalid (void)
   g_assert_cmpstr (grl_media_get_id (media),
                    ==,
                    "1");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "John Doe");
   g_assert (!grl_media_get_title (media));

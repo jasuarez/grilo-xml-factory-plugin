@@ -31,7 +31,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 }
 
@@ -62,8 +62,8 @@ test_xml_factory_empty_strings (void)
   media = (GrlMedia *) medias->data;
 
   g_assert_cmpstr (grl_media_get_id (media), ==, "id");
-  g_assert (!grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)));
-  g_assert (!grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)));
+  g_assert (!grl_media_get_artist (media));
+  g_assert (!grl_media_get_album (media));
   g_assert (!grl_media_get_title (media));
 
   g_object_unref (media);
@@ -101,8 +101,8 @@ test_xml_factory_normal_strings (void)
   media = (GrlMedia *) medias->data;
 
   g_assert_cmpstr (grl_media_get_id (media), ==, "id");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)), ==, "Un Artista");
-  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)), ==, "Album");
+  g_assert_cmpstr (grl_media_get_artist (media), ==, "Un Artista");
+  g_assert_cmpstr (grl_media_get_album (media), ==, "Album");
   g_assert_cmpstr (grl_media_get_title (media), ==, "Titulo");
   g_assert (!grl_media_get_license (media));
 

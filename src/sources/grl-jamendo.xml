@@ -205,7 +205,7 @@
 
     <!-- Resolve: top level categories -->
     <resolve>
-      <require type="box">
+      <require type="container">
         <key name="id">^root-.+</key>
       </require>
       <result ref="root-level"/>
@@ -213,7 +213,7 @@
 
     <!-- Resolve: feeds -->
     <resolve>
-      <require type="box">
+      <require type="container">
         <key name="id">^feed-.+</key>
       </require>
       <result ref="feeds"/>
@@ -229,7 +229,7 @@
 
     <!-- Resolve: artist -->
     <resolve>
-      <require type="box">
+      <require type="container">
         <key name="artist">.+</key>
         <key name="album">^$</key>
       </require>
@@ -240,7 +240,7 @@
 
    <!-- Resolve: album -->
     <resolve>
-      <require type="box">
+      <require type="container">
         <key name="artist">.+</key>
         <key name="album">.+</key>
       </require>
@@ -253,7 +253,7 @@
   <!-- Type of provided content -->
   <provide>
     <!-- Fixed content -->
-    <media type="box"
+    <media type="container"
            query="/fixed/media"
            select="/fixed/media[id='%key:id%']">
       <key name="id">id</key>
@@ -277,7 +277,7 @@
     </media>
 
     <!-- Artists from XML results -->
-    <media type="box"
+    <media type="container"
            query="/data/artist"
            select="/data/artist">
       <key name="id" force="true">id</key>
@@ -289,7 +289,7 @@
     </media>
 
     <!-- Albums from XML results -->
-    <media type="box"
+    <media type="container"
            query="/data/album"
            select="/data/album">
       <key name="id" force="true">id</key>

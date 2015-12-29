@@ -44,7 +44,7 @@
   </operation>
 
   <provide>
-    <media type="box"
+    <media type="container"
            format="json"
            query="$['feeds'][0]['feeds'][*]"
            select="$['feeds'][0]['feeds'][?(@['feed_url']=='%key:id%')]">

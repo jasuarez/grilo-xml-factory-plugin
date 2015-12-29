@@ -33,7 +33,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 
   main_loop = g_main_loop_new (NULL, FALSE);
@@ -55,7 +55,7 @@ test_xml_factory_requirements_no_check (void)
   options = grl_operation_options_new (NULL);
 
   media = grl_media_audio_new ();
-  grl_media_audio_set_artist (GRL_MEDIA_AUDIO (media), "John Doe");
+  grl_media_set_artist (media, "John Doe");
 
   media = grl_source_resolve_sync (source,
                                    media,
@@ -64,10 +64,10 @@ test_xml_factory_requirements_no_check (void)
                                    &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "John Doe");
-  g_assert_cmpstr (grl_media_get_title (GRL_MEDIA (media)),
+  g_assert_cmpstr (grl_media_get_title (media),
                    ==,
                    "Artist is John Doe");
 
@@ -90,7 +90,7 @@ test_xml_factory_requirements_check (void)
   options = grl_operation_options_new (NULL);
 
   media = grl_media_audio_new ();
-  grl_media_audio_set_artist (GRL_MEDIA_AUDIO (media), "Special Doe");
+  grl_media_set_artist (media, "Special Doe");
 
   media = grl_source_resolve_sync (source,
                                    media,
@@ -99,7 +99,7 @@ test_xml_factory_requirements_check (void)
                                    &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "Special Doe");
 
@@ -109,7 +109,7 @@ test_xml_factory_requirements_check (void)
                    "Artist is Special Doe");
 
   grl_data_remove (GRL_DATA (media), GRL_METADATA_KEY_TITLE);
-  grl_media_audio_set_bitrate (GRL_MEDIA_AUDIO (media), 128);
+  grl_media_set_bitrate (media, 128);
 
   media = grl_source_resolve_sync (source,
                                    media,
@@ -118,7 +118,7 @@ test_xml_factory_requirements_check (void)
                                    &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "Special Doe");
 
@@ -128,7 +128,7 @@ test_xml_factory_requirements_check (void)
                    "Artist is Special Doe");
 
   grl_data_remove (GRL_DATA (media), GRL_METADATA_KEY_TITLE);
-  grl_media_audio_set_bitrate (GRL_MEDIA_AUDIO (media), 256);
+  grl_media_set_bitrate (media, 256);
 
   media = grl_source_resolve_sync (source,
                                    media,
@@ -137,7 +137,7 @@ test_xml_factory_requirements_check (void)
                                    &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "Special Doe");
 
@@ -165,7 +165,7 @@ test_xml_factory_requirements_no_match (void)
   options = grl_operation_options_new (NULL);
 
   media = grl_media_audio_new ();
-  grl_media_audio_set_album (GRL_MEDIA_AUDIO (media), "An album");
+  grl_media_set_album (media, "An album");
 
   media = grl_source_resolve_sync (source,
                                    media,
@@ -174,7 +174,7 @@ test_xml_factory_requirements_no_match (void)
                                    &error);
   g_assert_no_error (error);
 
-  g_assert_cmpstr (grl_media_audio_get_album (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_album (media),
                    ==,
                    "An album");
   g_assert (!grl_media_get_title (GRL_MEDIA (media)));

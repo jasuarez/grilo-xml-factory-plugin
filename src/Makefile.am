@@ -26,8 +26,8 @@ libgrlxmlfactory_la_LDFLAGS = \
 libgrlxmlfactory_la_SOURCES = \
    grl-xml-factory.c          \
    grl-xml-factory.h          \
-	json-ghashtable.c          \
-	json-ghashtable.h          \
+   json-ghashtable.c          \
+   json-ghashtable.h          \
    fetch.c                    \
    fetch.h                    \
    log.c                      \
@@ -38,23 +38,11 @@ libgrlxmlfactory_la_SOURCES = \
    expandable-string.h
 
 extdir               = $(GRL_PLUGINS_DIR)
-xmlfactoryxmldir     = $(GRL_PLUGINS_DIR)
-xmlfactoryxml_DATA   = $(XML_FACTORY_PLUGIN_ID).xml
 
 xsd_DATA = $(XML_FACTORY_PLUGIN_ID).xsd
 xsddir   = $(XML_FACTORY_SCHEMA_LOCATION)
 
-# This lets us test the plugin without installing it,
-# because grilo expects the .so and .xml files to be in
-# the same directory:
-copy-xml-to-libs-dir: libgrlxmlfactory.la
-	cp -f $(srcdir)/$(xmlfactoryxml_DATA) $(builddir)/.libs/
-
-all-local: copy-xml-to-libs-dir
-
-EXTRA_DIST =               \
-   $(xmlfactoryxml_DATA)   \
-   $(xsd_DATA)
+EXTRA_DIST = $(xsd_DATA)
 
 DIST_SUBDIRS = sources
 

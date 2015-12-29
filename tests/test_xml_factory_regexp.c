@@ -31,7 +31,7 @@ test_xml_factory_setup (void)
   GrlRegistry *registry;
 
   registry = grl_registry_get_default ();
-  grl_registry_load_all_plugins (registry, &error);
+  grl_registry_load_all_plugins (registry, TRUE, &error);
   g_assert_no_error (error);
 }
 
@@ -166,7 +166,7 @@ test_xml_factory_regexp_no_input (void)
 
   media = (GrlMedia *) medias->data;
   g_assert_cmpstr (grl_media_get_id (media), ==, "My Id");
-  g_assert (!grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)));
+  g_assert (!grl_media_get_artist (media));
   g_assert_cmpstr(grl_media_get_title (media), ==, "This is a fixed title");
 
   g_list_free_full (medias, g_object_unref);
@@ -238,7 +238,7 @@ test_xml_factory_regexp_decode_input (void)
   g_assert_cmpstr (grl_media_get_title (media),
                    ==,
                    "Hello &invalid; & <world>!");
-  g_assert_cmpstr (grl_media_audio_get_artist (GRL_MEDIA_AUDIO (media)),
+  g_assert_cmpstr (grl_media_get_artist (media),
                    ==,
                    "My Artist");
 

@@ -58,7 +58,7 @@
 /* Executes "call(data)" in a idle if options contains GRL_RESOLVE_IDLE_RELAY
    flag; else, it invokes the call directly */
 #define EXECUTE_CALL(options, call, data)                               \
-  ((grl_operation_options_get_flags(options)&GRL_RESOLVE_IDLE_RELAY)? g_idle_add((GSourceFunc) (call), (data)):(call)(data))
+  ((grl_operation_options_get_resolution_flags(options)&GRL_RESOLVE_IDLE_RELAY)? g_idle_add((GSourceFunc) (call), (data)):(call)(data))
 
 /* ---------- Logging ---------- */
 
@@ -109,7 +109,7 @@ typedef struct _Operation {
   GrlKeyID resolve_key;
   gboolean resolve_any;
   GList *requirements;
-  GType required_type;
+  GrlMediaType required_type;
   ResultData *result;
 } Operation;
 
@@ -126,7 +126,7 @@ typedef struct _PrivateData {
 typedef struct _MediaTemplate {
   glong line_number;
   gchar *operation_id;
-  GType media_type;
+  GrlMediaType media_type;
   gint format;
   NameSpace *namespace;
   gint namespace_size;
@@ -195,9 +195,14 @@ struct _GrlXmlFactorySourcePrivate {
   lua_State *lua_state;
 };
 
+/* API version = 1.0 */
+gint API_VERSION[] = { 1, 0 };
+
 gboolean grl_xml_factory_plugin_init (GrlRegistry *registry,
                                       GrlPlugin *plugin,
                                       GList *configs);
+static void grl_xml_factory_plugin_register_keys (GrlRegistry *registry,
+                                                  GrlPlugin *plugin);
 
 static GrlXmlFactorySource *grl_xml_factory_source_new (const gchar *xml_spec_path,
                                                         xmlSchemaPtr schema,
@@ -315,62 +320,46 @@ GrlKeyID GRL_METADATA_KEY_PRIVATE_KEYS = 0;
 /* =================== XML Factory Plugin  =============== */
 
 
+static void
+grl_xml_factory_plugin_register_keys (GrlRegistry *registry,
+                                      GrlPlugin *plugin)
+{
+  GParamSpec *pspec;
+  GError *error = NULL;
+
+  /* Register key to store private values */
+  pspec = g_param_spec_string ("xml-factory-private-keys",
+                               "XML Factory Private Keys",
+                               "XML Factory Private Keys",
+                               NULL,
+                               G_PARAM_READWRITE);
+
+  GRL_METADATA_KEY_PRIVATE_KEYS = grl_registry_register_metadata_key (registry, pspec, GRL_METADATA_KEY_INVALID, &error);
+  if (error) {
+    GRL_WARNING ("Can't register \"xml-factory-private-keys\" key: %s", error->message);
+    g_error_free (error);
+  }
+}
+
 gboolean
 grl_xml_factory_plugin_init (GrlRegistry *registry,
                              GrlPlugin *plugin,
                              GList *configs)
 {
-  GError *error = NULL;
   GList *source_xml_specs;
   GList *spec;
-  GParamSpec *pspec;
   GrlXmlFactorySource *source;
-  const gchar *supported_version;
   gboolean source_loaded = FALSE;
-  gchar **supported_versions;
-  gint back_supported_version;
-  gint max_supported_version;
   xmlSchemaPtr source_schema;
 
   GRL_LOG_DOMAIN_INIT (xml_factory_log_domain, "xml-factory");
 
-  /* Register key to store private values */
-  pspec = g_param_spec_string ("xml-factory-private-keys",
-                               "XML Factory Private Keys",
-                               "XML Factory Private keys",
-                               NULL,
-                               G_PARAM_READWRITE);
-
-  GRL_METADATA_KEY_PRIVATE_KEYS = grl_registry_register_metadata_key (registry, pspec, &error);
-  if (!GRL_METADATA_KEY_PRIVATE_KEYS) {
-    GRL_WARNING ("Can't register \"xml-factory-private-keys\" key: %s", error->message);
-    g_error_free (error);
-
+  if (GRL_METADATA_KEY_PRIVATE_KEYS == GRL_METADATA_KEY_INVALID) {
     return FALSE;
   }
 
   source_xml_specs = get_source_xml_specs ();
   source_schema = get_xml_schema ();
-
-  supported_version = grl_plugin_get_info (plugin, "api_version");
-  if (!supported_version) {
-    GRL_WARNING ("Supported API version not defined");
-    return FALSE;
-  }
-
-  supported_versions = g_strsplit (supported_version, ".", 2);
-  if (g_strv_length (supported_versions) != 2) {
-    GRL_WARNING ("Wrong supported API version '%s'", supported_version);
-    g_strfreev (supported_versions);
-    return FALSE;
-  }
-
-  max_supported_version =
-    (gint) g_ascii_strtoll ((const gchar *) supported_versions[0], NULL, 10);
-  back_supported_version =
-    (gint) g_ascii_strtoull ((const gchar *) supported_versions[1], NULL, 10);
-
-  g_strfreev (supported_versions);
 
   if (!source_xml_specs) {
     xmlSchemaFree (source_schema);
@@ -380,8 +369,8 @@ grl_xml_factory_plugin_init (GrlRegistry *registry,
   for (spec = source_xml_specs; spec; spec = g_list_next (spec)) {
     source = grl_xml_factory_source_new (spec->data,
                                          source_schema,
-                                         max_supported_version - back_supported_version,
-                                         max_supported_version,
+					 API_VERSION[0] - API_VERSION[1],
+					 API_VERSION[0],
                                          configs);
     if (source) {
       source_loaded = TRUE;
@@ -395,9 +384,17 @@ grl_xml_factory_plugin_init (GrlRegistry *registry,
   return source_loaded;
 }
 
-GRL_PLUGIN_REGISTER (grl_xml_factory_plugin_init,
-                     NULL,
-                     XML_FACTORY_PLUGIN_ID);
+GRL_PLUGIN_DEFINE (0, 3,
+		   XML_FACTORY_PLUGIN_ID,
+		   "Source factory from XML-based sources",
+		   "A plugin that creates sources from XML specifications",
+		   "Igalia S.L.",
+		   "0.3.0",
+		   "LGPL",
+		   "http://www.igalia.com",
+		   grl_xml_factory_plugin_init,
+		   NULL,
+		   grl_xml_factory_plugin_register_keys);
 
 G_DEFINE_TYPE (GrlXmlFactorySource,
                grl_xml_factory_source,
@@ -501,7 +498,7 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
   GList *requirement;
   GrlConfig *default_config;
   GrlConfig *merged_config;
-  GrlMediaType supported_media_type = GRL_MEDIA_TYPE_NONE;
+  GrlSupportedMedia supported_media_type = GRL_SUPPORTED_MEDIA_NONE;
   GrlXmlFactorySource *source;
   MediaTemplate *template;
   gboolean debug;
@@ -747,14 +744,14 @@ grl_xml_factory_source_new (const gchar *xml_spec_path,
     if (template) {
       source->priv->media_templates =
         g_list_prepend (source->priv->media_templates, template);
-      if (template->media_type == GRL_TYPE_MEDIA_AUDIO) {
-        supported_media_type |= GRL_MEDIA_TYPE_AUDIO;
-      } else if (template->media_type == GRL_TYPE_MEDIA_VIDEO) {
-        supported_media_type |= GRL_MEDIA_TYPE_VIDEO;
-      } else if (template->media_type == GRL_TYPE_MEDIA_IMAGE) {
-        supported_media_type |= GRL_MEDIA_TYPE_IMAGE;
-      } else if (template->media_type == GRL_TYPE_MEDIA) {
-        supported_media_type |= GRL_MEDIA_TYPE_ALL;
+      if (template->media_type == GRL_MEDIA_TYPE_AUDIO) {
+        supported_media_type |= GRL_SUPPORTED_MEDIA_AUDIO;
+      } else if (template->media_type == GRL_MEDIA_TYPE_VIDEO) {
+        supported_media_type |= GRL_SUPPORTED_MEDIA_VIDEO;
+      } else if (template->media_type == GRL_MEDIA_TYPE_IMAGE) {
+        supported_media_type |= GRL_SUPPORTED_MEDIA_IMAGE;
+      } else if (template->media_type == GRL_MEDIA_TYPE_UNKNOWN) {
+        supported_media_type |= GRL_SUPPORTED_MEDIA_ALL;
       }
     }
     xml_provide = xml_get_node (xml_provide->next);
@@ -809,16 +806,16 @@ void handle_schema_warnings (void *ctx,
 
 /* Pretty-print GrlMedia based @t */
 static const gchar *
-gtype_to_string (GType t)
+grlmediatype_to_string (GrlMediaType t)
 {
-  if (t == GRL_TYPE_MEDIA_AUDIO) {
+  if (t == GRL_MEDIA_TYPE_AUDIO) {
     return "audio";
-  } else if (t == GRL_TYPE_MEDIA_VIDEO) {
+  } else if (t == GRL_MEDIA_TYPE_VIDEO) {
     return "video";
-  } else if (t == GRL_TYPE_MEDIA_IMAGE) {
+  } else if (t == GRL_MEDIA_TYPE_IMAGE) {
     return "image";
-  } else if (t == GRL_TYPE_MEDIA_BOX) {
-    return "box";
+  } else if (t == GRL_MEDIA_TYPE_CONTAINER) {
+    return "container";
   } else {
     return "unknown";
   }
@@ -971,7 +968,7 @@ operation_new (void)
   Operation *operation;
 
   operation = g_slice_new0 (Operation);
-  operation->required_type = GRL_TYPE_MEDIA;
+  operation->required_type = GRL_MEDIA_TYPE_UNKNOWN;
 
   return operation;
 }
@@ -1675,27 +1672,27 @@ xml_spec_get_fetch_data (GrlXmlFactorySource *source,
   return data;
 }
 
-/* Returns the GType of the media specified in the "type" property in
+/* Returns the GrlMediaType of the media specified in the "type" property in
    @xml_node */
-static GType
+static GrlMediaType
 xml_spec_get_media_type (xmlNodePtr xml_node)
 {
   xmlChar *type;
-  GType media_type;
+  GrlMediaType media_type;
 
   type = xmlGetProp (xml_node, (const xmlChar *) "type");
 
   /* Get element type */
   if (xmlStrcmp (type, (const xmlChar *) "audio") == 0) {
-    media_type = GRL_TYPE_MEDIA_AUDIO;
+    media_type = GRL_MEDIA_TYPE_AUDIO;
   } else if (xmlStrcmp (type, (const xmlChar *) "video") == 0) {
-    media_type = GRL_TYPE_MEDIA_VIDEO;
+    media_type = GRL_MEDIA_TYPE_VIDEO;
   } else if (xmlStrcmp (type, (const xmlChar *) "image") == 0) {
-    media_type = GRL_TYPE_MEDIA_IMAGE;
-  } else if (xmlStrcmp (type, (const xmlChar *) "box") == 0) {
-    media_type = GRL_TYPE_MEDIA_BOX;
+    media_type = GRL_MEDIA_TYPE_IMAGE;
+  } else if (xmlStrcmp (type, (const xmlChar *) "container") == 0) {
+    media_type = GRL_MEDIA_TYPE_CONTAINER;
   } else {
-    media_type = GRL_TYPE_MEDIA;
+    media_type = GRL_MEDIA_TYPE_UNKNOWN;
   }
 
   xmlFree (type);
@@ -2891,8 +2888,8 @@ operation_call_send_xml_results (OperationCallData *data)
         GRL_XML_DEBUG (data->source,
                        GRL_XML_DEBUG_PROVIDE,
                        "Creating %s media",
-                       gtype_to_string (media_template->media_type));
-        send_item->media = g_object_new (media_template->media_type, NULL);
+                       grlmediatype_to_string (media_template->media_type));
+        send_item->media = g_object_new (GRL_TYPE_MEDIA, "media-type", media_template->media_type, NULL);
         send_item->pending_count = g_list_length (keys);
         data->send_list = g_list_append (data->send_list, send_item);
 
@@ -3186,8 +3183,8 @@ operation_call_send_json_results (OperationCallData *data)
         GRL_XML_DEBUG (data->source,
                        GRL_XML_DEBUG_PROVIDE,
                        "Creating %s media",
-                       gtype_to_string (media_template->media_type));
-        send_item->media = g_object_new (media_template->media_type, NULL);
+                       grlmediatype_to_string (media_template->media_type));
+        send_item->media = g_object_new (GRL_TYPE_MEDIA, "media-type", media_template->media_type, NULL);
         send_item->pending_count = g_list_length (keys);
         data->send_list = g_list_append (data->send_list, send_item);
 
@@ -3427,8 +3424,8 @@ operation_requirements_match (GrlXmlFactorySource *factory_source,
     GRL_XML_DEBUG (factory_source,
                    GRL_XML_DEBUG_OPERATION,
                    "      Failed: required %s media, but current media is %s",
-                   gtype_to_string (operation->required_type),
-                   gtype_to_string (G_TYPE_FROM_INSTANCE (media)));
+                   grlmediatype_to_string (operation->required_type),
+                   grlmediatype_to_string (G_TYPE_FROM_INSTANCE (media)));
     return FALSE;
   }
 
